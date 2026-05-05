@@ -36,14 +36,10 @@ Do not open `5432`. PostgreSQL stays private inside Docker.
 - Lowest workable: `Linux/Unix $7/month`, 1 GB RAM
 - Safer: `Linux/Unix $12/month`, 2 GB RAM
 
-On the `$7/month` instance, add swap:
+On the `$7/month` instance, add swap. The GitHub deploy workflow runs `deploy/aws/ensure-swap.sh` automatically, but you can run it manually too:
 
 ```bash
-sudo fallocate -l 2G /swapfile
-sudo chmod 600 /swapfile
-sudo mkswap /swapfile
-sudo swapon /swapfile
-echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+sudo sh deploy/aws/ensure-swap.sh
 ```
 
 ## Server Setup
@@ -137,9 +133,14 @@ It does:
 2. Run typecheck
 3. Run tests
 4. Build the Next.js app
-5. SSH to Lightsail
-6. `git pull --ff-only`
-7. `docker compose ... up -d --build`
+5. Build the Docker image on the GitHub runner
+6. SSH to Lightsail
+7. `git pull --ff-only`
+8. Ensure swap exists on Lightsail
+9. Transfer the prebuilt Docker image to Lightsail
+10. `docker compose ... up -d --no-build`
+
+The workflow does not build the app image on Lightsail. That avoids `exit code 137` out-of-memory failures on the 1 GB instance during `pnpm install`.
 
 Run the manual server setup at least once before relying on the workflow.
 
@@ -174,6 +175,7 @@ chmod 600 ~/.ssh/authorized_keys
 ```bash
 cd ~/sda-service-request
 git pull --ff-only
+sudo sh deploy/aws/ensure-swap.sh
 docker compose \
   -f deploy/aws/docker-compose.low-cost.yml \
   --env-file deploy/aws/lightsail.env \

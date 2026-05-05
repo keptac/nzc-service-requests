@@ -69,7 +69,11 @@ jobs:
       LIGHTSAIL_USER: ${{ vars.LIGHTSAIL_USER }}
       LIGHTSAIL_APP_DIR: ${{ vars.LIGHTSAIL_APP_DIR }}
       LIGHTSAIL_SSH_PORT: ${{ vars.LIGHTSAIL_SSH_PORT || '22' }}
+      APP_IMAGE: sda-service-request:production
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Check deploy configuration
         env:
           SSH_PRIVATE_KEY: ${{ secrets.LIGHTSAIL_SSH_PRIVATE_KEY }}
@@ -90,7 +94,10 @@ jobs:
           chmod 600 ~/.ssh/lightsail_key
           ssh-keyscan -p "$LIGHTSAIL_SSH_PORT" "$LIGHTSAIL_HOST" >> ~/.ssh/known_hosts
 
-      - name: Deploy on Lightsail
+      - name: Build deploy image
+        run: docker build --platform linux/amd64 -t "$APP_IMAGE" .
+
+      - name: Prepare Lightsail
         run: |
           set -euo pipefail
           ssh -i ~/.ssh/lightsail_key -p "$LIGHTSAIL_SSH_PORT" "$LIGHTSAIL_USER@$LIGHTSAIL_HOST" \
@@ -104,10 +111,25 @@ jobs:
           if [ "$CURRENT_SHA" != "$SHA" ]; then
             echo "Warning: deployed HEAD $CURRENT_SHA differs from workflow SHA $SHA"
           fi
+          sudo -n sh deploy/aws/ensure-swap.sh
+          REMOTE
+
+      - name: Transfer deploy image
+        run: |
+          set -euo pipefail
+          docker save "$APP_IMAGE" | gzip -1 | ssh -i ~/.ssh/lightsail_key -p "$LIGHTSAIL_SSH_PORT" "$LIGHTSAIL_USER@$LIGHTSAIL_HOST" "gunzip | docker load"
+
+      - name: Deploy on Lightsail
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/lightsail_key -p "$LIGHTSAIL_SSH_PORT" "$LIGHTSAIL_USER@$LIGHTSAIL_HOST" \
+            "APP_DIR='$LIGHTSAIL_APP_DIR' APP_IMAGE='$APP_IMAGE' bash -s" <<'REMOTE'
+          set -euo pipefail
+          cd "$APP_DIR"
           docker compose \
             -f deploy/aws/docker-compose.low-cost.yml \
             --env-file deploy/aws/lightsail.env \
-            up -d --build
+            up -d --no-build
           docker compose \
             -f deploy/aws/docker-compose.low-cost.yml \
             --env-file deploy/aws/lightsail.env \
