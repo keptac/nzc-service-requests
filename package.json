@@ -2,6 +2,7 @@
   "name": "sda-service-request-tracker",
   "version": "1.0.0",
   "private": true,
+  "packageManager": "pnpm@9.15.9",
   "description": "Full-stack service request approval tracker for Seventh-day Adventist Church hierarchy.",
   "scripts": {
     "dev": "next dev",

@@ -93,6 +93,8 @@ Set at least:
 - `POSTGRES_PASSWORD`
 - `AUTH_SECRET`
 - `WHATSAPP_WEBHOOK_TOKEN`
+- `BOOTSTRAP_ADMIN_EMAIL`
+- `BOOTSTRAP_ADMIN_PASSWORD`
 
 Generate secrets with:
 
@@ -120,6 +122,8 @@ Open:
 ```text
 https://YOUR_APP_DOMAIN/api/health
 ```
+
+The app runs a production bootstrap on startup. It creates roles, default request types, and the Super Admin configured by `BOOTSTRAP_ADMIN_EMAIL` and `BOOTSTRAP_ADMIN_PASSWORD`. On a fresh database with no users, those admin variables are required and startup will fail without them. Placeholder values from `lightsail.env.example` are rejected; set real values before deploying. Change that password after first login.
 
 ## GitHub Actions CI/CD
 

@@ -70,11 +70,23 @@ jobs:
       LIGHTSAIL_APP_DIR: ${{ vars.LIGHTSAIL_APP_DIR }}
       LIGHTSAIL_SSH_PORT: ${{ vars.LIGHTSAIL_SSH_PORT || '22' }}
     steps:
+      - name: Check deploy configuration
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.LIGHTSAIL_SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$LIGHTSAIL_HOST" || { echo "Missing production variable LIGHTSAIL_HOST"; exit 1; }
+          test -n "$LIGHTSAIL_USER" || { echo "Missing production variable LIGHTSAIL_USER"; exit 1; }
+          test -n "$LIGHTSAIL_APP_DIR" || { echo "Missing production variable LIGHTSAIL_APP_DIR"; exit 1; }
+          test -n "$SSH_PRIVATE_KEY" || { echo "Missing production secret LIGHTSAIL_SSH_PRIVATE_KEY"; exit 1; }
+
       - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.LIGHTSAIL_SSH_PRIVATE_KEY }}
         run: |
           set -euo pipefail
           install -m 700 -d ~/.ssh
-          printf '%s\n' "${{ secrets.LIGHTSAIL_SSH_PRIVATE_KEY }}" > ~/.ssh/lightsail_key
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/lightsail_key
           chmod 600 ~/.ssh/lightsail_key
           ssh-keyscan -p "$LIGHTSAIL_SSH_PORT" "$LIGHTSAIL_HOST" >> ~/.ssh/known_hosts
 
