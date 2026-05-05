@@ -115,7 +115,6 @@ Check it:
 docker compose -f deploy/aws/docker-compose.low-cost.yml --env-file deploy/aws/lightsail.env ps
 docker compose -f deploy/aws/docker-compose.low-cost.yml --env-file deploy/aws/lightsail.env logs -f app
 ```
-
 Open:
 
 ```text
