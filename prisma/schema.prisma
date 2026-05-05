@@ -1,0 +1,315 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  users       User[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model User {
+  id                String            @id @default(cuid())
+  name              String
+  email             String            @unique
+  passwordHash      String
+  phonePrimary      String?           @map("phone_primary")
+  phoneSecondary    String?           @map("phone_secondary")
+  whatsappNumber    String?           @map("whatsapp_number")
+  whatsappEnabled   Boolean           @default(false) @map("whatsapp_enabled")
+  whatsappEnabledAt DateTime?         @map("whatsapp_enabled_at")
+  isSeedUser        Boolean           @default(false) @map("is_seed_user")
+  dataQualityStatus String            @default("clean") @map("data_quality_status")
+  active            Boolean           @default(true)
+  roleId            String
+  role              Role              @relation(fields: [roleId], references: [id])
+  unionId           String?
+  union             Union?            @relation(fields: [unionId], references: [id])
+  conferenceId      String?
+  conference        Conference?       @relation(fields: [conferenceId], references: [id])
+  districtId        String?
+  district          District?         @relation(fields: [districtId], references: [id])
+  churchId          String?
+  church            Church?           @relation(fields: [churchId], references: [id])
+  requestedItems    ServiceRequest[]  @relation("Requester")
+  comments          Comment[]
+  attachments       Attachment[]
+  actions           ApprovalStep[]    @relation("StepActor")
+  auditLogs         AuditLog[]
+  notifications     Notification[]
+  whatsappMessages  WhatsAppMessage[]
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@index([roleId])
+  @@index([unionId])
+  @@index([conferenceId])
+  @@index([districtId])
+  @@index([churchId])
+  @@index([isSeedUser])
+  @@index([dataQualityStatus])
+  @@index([whatsappEnabled])
+  @@index([whatsappNumber])
+}
+
+model Union {
+  id          String           @id @default(cuid())
+  name        String
+  code        String           @unique
+  active      Boolean          @default(true)
+  conferences Conference[]
+  users       User[]
+  requests    ServiceRequest[] @relation("TargetUnion")
+  steps       ApprovalStep[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model Conference {
+  id        String           @id @default(cuid())
+  name      String
+  code      String           @unique
+  active    Boolean          @default(true)
+  unionId   String
+  union     Union            @relation(fields: [unionId], references: [id])
+  districts District[]
+  users     User[]
+  requests  ServiceRequest[] @relation("TargetConference")
+  steps     ApprovalStep[]
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@index([unionId])
+}
+
+model District {
+  id           String           @id @default(cuid())
+  name         String
+  code         String           @unique
+  active       Boolean          @default(true)
+  conferenceId String
+  conference   Conference       @relation(fields: [conferenceId], references: [id])
+  churches     Church[]
+  users        User[]
+  requests     ServiceRequest[] @relation("TargetDistrict")
+  steps        ApprovalStep[]
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@index([conferenceId])
+}
+
+model Church {
+  id         String           @id @default(cuid())
+  name       String
+  code       String           @unique
+  active     Boolean          @default(true)
+  districtId String
+  district   District         @relation(fields: [districtId], references: [id])
+  users      User[]
+  requests   ServiceRequest[] @relation("RequestingChurch")
+  targetOf   ServiceRequest[] @relation("TargetChurch")
+  steps      ApprovalStep[]
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  @@index([districtId])
+}
+
+model ServiceRequestType {
+  id        String           @id @default(cuid())
+  name      String           @unique
+  active    Boolean          @default(true)
+  requests  ServiceRequest[]
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+}
+
+model ServiceRequest {
+  id                  String             @id @default(cuid())
+  requestNumber       String             @unique
+  typeId              String
+  type                ServiceRequestType @relation(fields: [typeId], references: [id])
+  title               String
+  description         String
+  requestingChurchId  String
+  requestingChurch    Church             @relation("RequestingChurch", fields: [requestingChurchId], references: [id])
+  targetChurchId      String?
+  targetChurch        Church?            @relation("TargetChurch", fields: [targetChurchId], references: [id])
+  targetDistrictId    String?
+  targetDistrict      District?          @relation("TargetDistrict", fields: [targetDistrictId], references: [id])
+  targetConferenceId  String?
+  targetConference    Conference?        @relation("TargetConference", fields: [targetConferenceId], references: [id])
+  targetUnionId       String?
+  targetUnion         Union?             @relation("TargetUnion", fields: [targetUnionId], references: [id])
+  proposedDate        DateTime?
+  requiredToDate      DateTime?
+  contactPerson       String
+  contactEmail        String?
+  serviceRequired     String?
+  presentationMethod  String?
+  nameSuggested       String?
+  fromWhere           String?
+  whereRequired       String?
+  boardActionNumber   String?
+  expensesIncurredBy  String?
+  clericalOfficeName  String?
+  clericalOfficePhone String?
+  firstElderName      String?
+  firstElderPhone     String?
+  districtPastorName  String?
+  districtPastorPhone String?
+  priority            String             @default("NORMAL")
+  additionalNotes     String?
+  status              String             @default("DRAFT")
+  currentStepOrder    Int?
+  requesterId         String
+  requester           User               @relation("Requester", fields: [requesterId], references: [id])
+  approvalSteps       ApprovalStep[]
+  comments            Comment[]
+  attachments         Attachment[]
+  auditLogs           AuditLog[]
+  notifications       Notification[]
+  whatsappMessages    WhatsAppMessage[]
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  @@index([typeId])
+  @@index([requestingChurchId])
+  @@index([targetChurchId])
+  @@index([targetDistrictId])
+  @@index([targetConferenceId])
+  @@index([targetUnionId])
+  @@index([requesterId])
+  @@index([status])
+}
+
+model ApprovalStep {
+  id                   String         @id @default(cuid())
+  requestId            String
+  request              ServiceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  stage                String
+  stepOrder            Int
+  status               String         @default("PENDING")
+  assignedRoleGroup    String
+  assignedScopeType    String
+  assignedChurchId     String?
+  assignedChurch       Church?        @relation(fields: [assignedChurchId], references: [id])
+  assignedDistrictId   String?
+  assignedDistrict     District?      @relation(fields: [assignedDistrictId], references: [id])
+  assignedConferenceId String?
+  assignedConference   Conference?    @relation(fields: [assignedConferenceId], references: [id])
+  assignedUnionId      String?
+  assignedUnion        Union?         @relation(fields: [assignedUnionId], references: [id])
+  actedById            String?
+  actedBy              User?          @relation("StepActor", fields: [actedById], references: [id])
+  actedAt              DateTime?
+  comment              String?
+  minuteNumber         String?
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+
+  @@unique([requestId, stepOrder])
+  @@index([stage])
+  @@index([status])
+  @@index([assignedChurchId])
+  @@index([assignedDistrictId])
+  @@index([assignedConferenceId])
+  @@index([assignedUnionId])
+  @@index([actedById])
+}
+
+model Comment {
+  id        String         @id @default(cuid())
+  requestId String
+  request   ServiceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User           @relation(fields: [authorId], references: [id])
+  body      String
+  system    Boolean        @default(false)
+  createdAt DateTime       @default(now())
+
+  @@index([requestId])
+  @@index([authorId])
+}
+
+model Attachment {
+  id         String         @id @default(cuid())
+  requestId  String
+  request    ServiceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  uploaderId String
+  uploader   User           @relation(fields: [uploaderId], references: [id])
+  filename   String
+  storedName String
+  mimeType   String
+  size       Int
+  url        String
+  createdAt  DateTime       @default(now())
+
+  @@index([requestId])
+  @@index([uploaderId])
+}
+
+model AuditLog {
+  id         String          @id @default(cuid())
+  actorId    String?
+  actor      User?           @relation(fields: [actorId], references: [id])
+  requestId  String?
+  request    ServiceRequest? @relation(fields: [requestId], references: [id], onDelete: SetNull)
+  action     String
+  entityType String
+  entityId   String
+  metadata   String?
+  createdAt  DateTime        @default(now())
+
+  @@index([actorId])
+  @@index([requestId])
+  @@index([entityType, entityId])
+}
+
+model Notification {
+  id        String          @id @default(cuid())
+  userId    String
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  requestId String?
+  request   ServiceRequest? @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  title     String
+  body      String
+  readAt    DateTime?
+  createdAt DateTime        @default(now())
+
+  @@index([userId])
+  @@index([requestId])
+  @@index([readAt])
+}
+
+model WhatsAppMessage {
+  id                String          @id @default(cuid())
+  userId            String?
+  user              User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+  requestId         String?
+  request           ServiceRequest? @relation(fields: [requestId], references: [id], onDelete: SetNull)
+  direction         String
+  provider          String          @default("twilio")
+  fromNumber        String
+  toNumber          String
+  body              String
+  status            String
+  providerMessageId String?
+  error             String?
+  createdAt         DateTime        @default(now())
+
+  @@index([userId])
+  @@index([requestId])
+  @@index([direction])
+  @@index([status])
+  @@index([providerMessageId])
+}

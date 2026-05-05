@@ -1,0 +1,15 @@
+.DS_Store
+.env
+.env.*
+.git
+.github
+.local-postgres
+.next
+node_modules
+uploads
+public/uploads
+prisma/dev.db
+prisma/seed
+tsconfig.tsbuildinfo
+npm-debug.log*
+pnpm-debug.log*

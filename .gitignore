@@ -1,0 +1,13 @@
+node_modules
+.next
+.local-postgres
+dist
+coverage
+.env
+.env.local
+*.db
+*.db-journal
+uploads
+public/uploads
+prisma/seed/
+deploy/aws/lightsail.env
