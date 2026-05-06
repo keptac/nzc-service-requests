@@ -45,6 +45,57 @@ Open these Lightsail firewall ports:
 
 Do not open `5432`. PostgreSQL stays private inside Docker.
 
+## Caddy HTTPS Proxy
+
+Caddy is the public web server for the app. It listens on ports `80` and `443`, gets and renews HTTPS certificates automatically, and forwards traffic to the Next.js container on the private Docker network.
+
+The Caddy config is [Caddyfile](./Caddyfile):
+
+```caddyfile
+{$APP_DOMAIN} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+
+	reverse_proxy app:3000
+}
+```
+
+Before Caddy can issue the certificate:
+
+- `APP_DOMAIN` in `deploy/aws/lightsail.env` must be the real hostname, without `https://`
+- the DNS `A` record for that hostname must point to the Lightsail static IP
+- Lightsail ports `80` and `443` must be open
+- no other process on the instance should be using ports `80` or `443`
+
+Example:
+
+```env
+APP_DOMAIN=requests.yourdomain.org
+```
+
+Caddy stores certificate data in the Docker volume `caddy_data`, so certificates survive container restarts.
+
+Useful Caddy commands on the Lightsail instance:
+
+```bash
+docker compose -f deploy/aws/docker-compose.low-cost.yml --env-file deploy/aws/lightsail.env logs -f caddy
+docker compose -f deploy/aws/docker-compose.low-cost.yml --env-file deploy/aws/lightsail.env restart caddy
+docker compose -f deploy/aws/docker-compose.low-cost.yml --env-file deploy/aws/lightsail.env exec caddy caddy validate --config /etc/caddy/Caddyfile
+```
+
+If HTTPS does not come up, first check DNS and firewall:
+
+```bash
+dig +short YOUR_APP_DOMAIN
+curl -I http://YOUR_APP_DOMAIN
+docker compose -f deploy/aws/docker-compose.low-cost.yml --env-file deploy/aws/lightsail.env logs caddy
+```
+
 ## Recommended Instance
 
 - Lowest workable: `Linux/Unix $7/month`, 1 GB RAM
