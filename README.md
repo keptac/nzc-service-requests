@@ -135,10 +135,13 @@ Tests cover workflow routing and role permissions.
 
 - Low-cost AWS Lightsail deployment files are in `deploy/aws`.
 - The GitHub Actions workflow for CI/CD is `.github/workflows/deploy-aws.yml`.
-- This app is dynamic Next.js, so the low-cost deployment runs the whole app on Lightsail behind Caddy instead of publishing a static frontend to S3.
-- Use a managed PostgreSQL database and update `DATABASE_URL`.
+- This app is dynamic Next.js, so the recommended deployment runs the whole app on Lightsail behind Caddy instead of publishing a static frontend to S3.
+- The production build does not create `index.html`; it creates `.next/` and must run with `next start`.
+- Recommended AWS resources: one Lightsail instance, one Lightsail static IP, one DNS `A` record, and optional Route 53 DNS management.
+- Not needed for the current app: S3 static frontend bucket, CloudFront S3 distribution, CloudFront default root `index.html`, ACM certificate for CloudFront, RDS, ECS, Fargate, App Runner, or an application load balancer.
+- PostgreSQL runs in Docker on the Lightsail instance for the low-cost setup. Move to managed PostgreSQL later if you need managed backups, failover, or higher availability.
 - Set a strong `AUTH_SECRET`.
-- Store uploads in object storage instead of local disk.
+- The low-cost setup stores uploads on the Lightsail instance. Later, move uploads to object storage if you need stronger durability or multi-server deployment. This is separate from S3 static website hosting.
 - Add CSRF protection if exposing mutating routes outside same-site browser flows.
 - Replace seeded passwords immediately after provisioning.
 

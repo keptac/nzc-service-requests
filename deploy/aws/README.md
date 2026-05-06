@@ -1,13 +1,34 @@
-# Low-Cost AWS Lightsail Deployment
+# Recommended AWS Deployment
 
 This repo is a dynamic Next.js full-stack app with API routes, authentication, file uploads, PDF generation, and Prisma. It should run as one server-side app, not as a static S3 frontend.
 
-The cheapest practical AWS setup is:
+Recommended production shape:
 
-- App: one small Lightsail Linux instance
-- Database: PostgreSQL on the same Lightsail instance
-- HTTPS reverse proxy: Caddy
-- Region: `us-east-1`
+```text
+Users
+  -> DNS A record
+  -> Lightsail static IP
+  -> Caddy HTTPS reverse proxy
+  -> Next.js app container
+  -> PostgreSQL container
+```
+
+There is no `index.html` build artifact. The app runs with `next start`, so it needs a Node server.
+
+## What You Need On AWS
+
+Create only these AWS resources for the recommended low-cost setup:
+
+- One Lightsail Linux instance, Ubuntu LTS
+- One Lightsail static IP attached to that instance
+- One DNS `A` record pointing your app domain to the Lightsail static IP
+- Optional Route 53 hosted zone if you want AWS to manage DNS
+
+The app domain can be one hostname, for example:
+
+```text
+requests.yourdomain.org
+```
 
 The stack in this folder runs:
 
@@ -15,13 +36,25 @@ The stack in this folder runs:
 - `app` running Next.js
 - `caddy` for automatic HTTPS
 
-## AWS Resources
+Use `us-east-1` unless you have a specific reason to use another region.
 
-Create these in `us-east-1`:
+## What You Do Not Need
 
-1. One Lightsail Linux instance, Ubuntu LTS
-2. One Lightsail static IP attached to the instance
-3. DNS `A` record for your app domain pointing to the static IP
+Do not create these for the current app:
+
+- S3 frontend bucket
+- S3 static website hosting
+- CloudFront distribution with S3 origin
+- CloudFront default root object `index.html`
+- ACM certificate for CloudFront
+- RDS database
+- ECS, Fargate, App Runner, or load balancer
+
+S3 and CloudFront static hosting is only correct for apps that build static files such as `index.html`, `assets/*.js`, and `assets/*.css`. This app has server routes and database-backed pages, so S3 cannot run it.
+
+CloudFront is optional only if you configure it as a reverse proxy to Lightsail, not as an S3 static site. For this project, skip CloudFront until the Lightsail deployment is stable.
+
+## Lightsail Firewall
 
 Open these Lightsail firewall ports:
 
@@ -76,6 +109,12 @@ cd sda-service-request
 
 If the repo is private, configure SSH deploy-key access so `git pull` works without an interactive password prompt.
 
+Add swap:
+
+```bash
+sudo sh deploy/aws/ensure-swap.sh
+```
+
 Create the production env file:
 
 ```bash
@@ -98,7 +137,11 @@ Generate secrets with:
 openssl rand -hex 32
 ```
 
-Start the stack:
+Do not run `docker compose up -d --build` on the small Lightsail instance as the normal deployment path. Building the image on a 1 GB instance can fail with `exit code 137` during `pnpm install`.
+
+After the server setup and env file are ready, deploy from GitHub Actions. The workflow builds the Docker image on the GitHub runner, transfers it to Lightsail, and starts it with `--no-build`.
+
+If you need an emergency manual deploy on Lightsail, make sure swap is active first, then run:
 
 ```bash
 docker compose \
@@ -142,7 +185,7 @@ It does:
 
 The workflow does not build the app image on Lightsail. That avoids `exit code 137` out-of-memory failures on the 1 GB instance during `pnpm install`.
 
-Run the manual server setup at least once before relying on the workflow.
+Run the server setup once before relying on the workflow.
 
 ### GitHub Production Variables
 
@@ -172,6 +215,10 @@ chmod 600 ~/.ssh/authorized_keys
 
 ## Manual Update Flow
 
+The recommended update flow is to push to `main` and let GitHub Actions deploy.
+
+Manual server rebuilds are a fallback only:
+
 ```bash
 cd ~/sda-service-request
 git pull --ff-only
@@ -196,3 +243,5 @@ For production, automate backups to S3 or another machine.
 ## Notes
 
 S3 + CloudFront static hosting from the older setup is not used here because this app is not a static frontend. If you later split the UI from the API, you can reintroduce S3 + CloudFront for the frontend.
+
+If you later put CloudFront in front of Lightsail, use a custom HTTP origin that points to the Lightsail/Caddy hostname. Do not use an S3 origin, and do not configure `index.html` as the default root object.
