@@ -17,6 +17,7 @@ import { useMemo, useState } from "react";
 import { StatusBadge } from "./Badges";
 import { RequestActions } from "./RequestActions";
 import { Timeline } from "./Timeline";
+import { approvalAssignmentLabel } from "@/lib/approval-display";
 import { formatDateRange, fromNow } from "@/lib/format";
 import {
   canActOnStep,
@@ -402,7 +403,7 @@ export function RequestsTable({
                     </div>
                     <div className="detail-item">
                       <span>Current Stage</span>
-                      <strong>{pendingStep ? pendingStep.assignedRoleGroup : "No pending approval stage"}</strong>
+                      <strong>{pendingStep ? approvalAssignmentLabel(pendingStep) : "No pending approval stage"}</strong>
                     </div>
                     <div className="detail-item">
                       <span>Contact Person</span>

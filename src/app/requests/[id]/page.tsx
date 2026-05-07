@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/Badges";
 import { Timeline } from "@/components/Timeline";
 import { CommentsThread } from "@/components/CommentsThread";
 import { RequestActions } from "@/components/RequestActions";
+import { approvalAssignmentLabel } from "@/lib/approval-display";
 import { requireUser } from "@/lib/auth";
 import { accessContext, currentPendingStep, getRequestById } from "@/lib/requests";
 import {
@@ -134,7 +135,7 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
                 <StatusBadge status={request.status} />
               </DetailRow>
               <DetailRow label="Current Stage">
-                {pendingStep ? pendingStep.assignedRoleGroup : "No pending approval stage"}
+                {pendingStep ? approvalAssignmentLabel(pendingStep) : "No pending approval stage"}
               </DetailRow>
               <DetailRow label="Presentation Method">{request.presentationMethod ?? "Not set"}</DetailRow>
               <DetailRow label="Requesting Church">

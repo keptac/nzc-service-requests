@@ -99,7 +99,13 @@ export async function POST(request: Request, { params }: { params: { id: string 
       stepsToUse = await prisma.approvalStep.findMany({
         where: { requestId: serviceRequest.id },
         orderBy: { stepOrder: "asc" },
-        include: { actedBy: true }
+        include: {
+          actedBy: true,
+          assignedChurch: true,
+          assignedDistrict: true,
+          assignedConference: true,
+          assignedUnion: true
+        }
       });
     }
 

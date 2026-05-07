@@ -27,20 +27,20 @@ export default async function LoginPage() {
               notifications, and a complete audit trail.
             </p>
           </div>
-          <div className="auth-metrics" aria-label="System highlights">
+          {/* <div className="auth-metrics" aria-label="System highlights">
             <div>
-              <strong>4</strong>
-              <span>Hierarchy levels</span>
+              <strong>E</strong>
+              <span>Requests</span>
             </div>
             <div>
-              <strong>14</strong>
-              <span>Supported roles</span>
+              <strong>Easy</strong>
+              <span>Approval</span>
             </div>
             <div>
               <strong>100%</strong>
               <span>Action history</span>
             </div>
-          </div>
+          </div> */}
         </div>
       </section>
       <section className="login-card" aria-label="Sign in">

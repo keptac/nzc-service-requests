@@ -1,6 +1,6 @@
 import { Check, Clock3, CornerDownLeft, Minus, X } from "lucide-react";
+import { approvalAssignmentLabel, approvalStageName } from "@/lib/approval-display";
 import { formatDateTime } from "@/lib/format";
-import { stageDisplayName } from "@/lib/workflow";
 
 type Step = {
   id: string;
@@ -8,6 +8,11 @@ type Step = {
   stepOrder: number;
   status: string;
   assignedRoleGroup: string;
+  assignedScopeType?: string;
+  assignedChurch?: { name: string } | null;
+  assignedDistrict?: { name: string } | null;
+  assignedConference?: { name: string } | null;
+  assignedUnion?: { name: string } | null;
   actedAt: Date | string | null;
   comment: string | null;
   minuteNumber?: string | null;
@@ -32,6 +37,7 @@ export function Timeline({ steps, currentStepOrder }: { steps: Step[]; currentSt
       {steps.map((step) => {
         const Icon = iconFor(step.status);
         const pending = step.status === "PENDING" && step.stepOrder === currentStepOrder;
+        const assignmentLabel = approvalAssignmentLabel(step);
         const statusLabel = pending
           ? "Current stage"
           : step.status === "APPROVED"
@@ -51,16 +57,16 @@ export function Timeline({ steps, currentStepOrder }: { steps: Step[]; currentSt
             <div className={`timeline-card ${pending ? "current" : ""}`}>
               <div className="timeline-stage-heading">
                 <strong>
-                  {step.stepOrder}. {stageDisplayName(step.stage)}
+                  {step.stepOrder}. {approvalStageName(step)}
                 </strong>
                 <span className={pending ? "timeline-current-label" : "timeline-status-label"}>{statusLabel}</span>
               </div>
-              <p>{step.assignedRoleGroup}</p>
+              <p>{assignmentLabel}</p>
               <p>
                 {step.actedBy?.name
                   ? `${step.status.toLowerCase()} by ${step.actedBy.name} on ${formatDateTime(step.actedAt)}`
                   : pending
-                    ? `Awaiting action from ${step.assignedRoleGroup}`
+                    ? `Awaiting action from ${assignmentLabel}`
                     : "Queued"}
               </p>
               {step.minuteNumber ? <p>Minute number: {step.minuteNumber}</p> : null}

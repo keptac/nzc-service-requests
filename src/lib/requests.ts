@@ -49,7 +49,11 @@ export const requestInclude = {
   targetUnion: true,
   approvalSteps: {
     include: {
-      actedBy: true
+      actedBy: true,
+      assignedChurch: true,
+      assignedDistrict: true,
+      assignedConference: true,
+      assignedUnion: true
     },
     orderBy: {
       stepOrder: "asc" as const
