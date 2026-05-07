@@ -1,4 +1,4 @@
-# SDA Service Request Tracker
+# SDA Approval Workflow
 
 A full-stack approval workflow application for Seventh-day Adventist Church service requests. It tracks requests from local church submission through pastor, conference, union, and destination church review with role-based visibility, comments, notifications, attachments, and audit logging.
 

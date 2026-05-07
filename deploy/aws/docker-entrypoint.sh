@@ -34,5 +34,5 @@ if [ "${RUN_SEED:-false}" = "true" ]; then
   ./node_modules/.bin/prisma db seed
 fi
 
-echo "Starting SDA Service Request Tracker..."
+echo "Starting SDA Approval Workflow..."
 exec ./node_modules/.bin/next start -H 0.0.0.0 -p "${PORT:-3000}"

@@ -222,7 +222,7 @@ export async function renderServiceRequestPdf(request: ServiceRequestPdfInput) {
     margins: { top: 44, right: 54, bottom: 46, left: 54 },
     info: {
       Title: `${request.requestNumber} service request`,
-      Author: "SDA Service Request Tracker"
+      Author: "SDA Approval Workflow"
     }
   });
   const completion = collectPdf(document);

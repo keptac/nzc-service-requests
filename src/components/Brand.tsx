@@ -12,7 +12,7 @@ export function Brand({
   const logo = tone === "light" ? logoWhite : logoForest;
 
   return (
-    <div className={`brand brand-${tone}`} aria-label="SDA Service Request Tracker">
+    <div className={`brand brand-${tone}`} aria-label="SDA Approval Workflow">
       <div className={`brand-mark ${compact ? "small" : ""}`}>
         <Image
           alt=""
@@ -24,7 +24,7 @@ export function Brand({
         />
       </div>
       <div className="brand-text">
-        <strong>SDA Service Request Tracker</strong>
+        <strong>SDA Approval Workflow</strong>
         {!compact ? <span>Service approvals and visibility</span> : null}
       </div>
     </div>

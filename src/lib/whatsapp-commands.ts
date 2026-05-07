@@ -41,7 +41,7 @@ function authUser(user: CommandUser): AuthUser {
 
 function helpText() {
   return [
-    "SDA Service Request Tracker WhatsApp commands:",
+    "SDA ApprovalWorkflow WhatsApp commands:",
     "STATUS <request-number>",
     "APPROVE <request-number> [comment]",
     "APPROVE <request-number> MINUTE <minute-number> [comment] for destination church acceptance",
@@ -398,7 +398,7 @@ export async function handleWhatsAppCommand(input: {
   });
 
   if (!user) {
-    return "This WhatsApp number is not approved for SDA Service Request Tracker. Ask an administrator to enable WhatsApp messaging for your user account.";
+    return "This WhatsApp number is not approved for SDA Approval Workflow. Ask an administrator to enable WhatsApp messaging for your user account.";
   }
 
   const { command, rest } = splitCommand(input.body);
