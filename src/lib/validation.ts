@@ -2,10 +2,10 @@ import { z } from "zod";
 import {
   ALLOWED_UPLOAD_TYPES,
   MAX_UPLOAD_BYTES,
-  PRIORITIES,
   REQUEST_STATUSES,
   ROLE_NAMES
 } from "./constants";
+import { LANGUAGE_CODES } from "./languages";
 
 const booleanInput = z.union([z.boolean(), z.enum(["true", "false"])]).transform((value) => value === true || value === "true");
 
@@ -40,7 +40,6 @@ export const createRequestSchema = z.object({
   firstElderPhone: z.string().max(60).optional().nullable(),
   districtPastorName: z.string().max(120).optional().nullable(),
   districtPastorPhone: z.string().max(60).optional().nullable(),
-  priority: z.enum(PRIORITIES),
   additionalNotes: z.string().max(3000).optional().nullable(),
   saveAsDraft: z.boolean().default(false)
 });
@@ -58,6 +57,10 @@ export const commentSchema = z.object({
 
 export const notificationSchema = z.object({
   notificationId: z.string().min(1)
+});
+
+export const languagePreferenceSchema = z.object({
+  preferredLanguage: z.enum(LANGUAGE_CODES)
 });
 
 export const createEntitySchemas = {
@@ -92,6 +95,7 @@ export const createEntitySchemas = {
     phoneSecondary: z.string().max(60).optional().nullable(),
     whatsappNumber: z.string().max(60).optional().nullable(),
     whatsappEnabled: booleanInput.optional(),
+    preferredLanguage: languagePreferenceSchema.shape.preferredLanguage.optional(),
     unionId: z.string().optional().nullable(),
     conferenceId: z.string().optional().nullable(),
     districtId: z.string().optional().nullable(),

@@ -56,10 +56,11 @@ export function canViewRequest(user: AuthUser, request: RequestAccessContext) {
 }
 
 export function canAccessCreateRequest(user: AuthUser) {
-  return user.roleName === "Church Clerk" && Boolean(user.churchId);
+  return isSuperAdmin(user) || (user.roleName === "Church Clerk" && Boolean(user.churchId));
 }
 
 export function canCreateRequest(user: AuthUser, requestingChurchId: string) {
+  if (isSuperAdmin(user)) return Boolean(requestingChurchId);
   return canAccessCreateRequest(user) && user.churchId === requestingChurchId;
 }
 

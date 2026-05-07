@@ -12,9 +12,9 @@ export default async function LoginPage() {
   return (
     <main className="auth-page">
       <div className="angel-field" aria-hidden="true">
-        <span className="angel-hologram angel-one" />
+        {/* <span className="angel-hologram angel-one" />
         <span className="angel-hologram angel-two" />
-        <span className="angel-hologram angel-three" />
+        <span className="angel-hologram angel-three" /> */}
       </div>
       <section className="auth-panel">
         <div className="auth-panel-content">
@@ -50,13 +50,13 @@ export default async function LoginPage() {
           <p>Sign in to review, approve, and monitor service requests.</p>
         </div>
         <LoginForm />
-        <div className="demo-list">
+        {/* <div className="demo-list">
           <strong>Seed credentials</strong>
           <span>super.admin@zeuc.local / Password123!</span>
           <span>arcadia@ezc.adventist.org / Password123!</span>
           <span>banket@nzc.adventist.org / Password123!</span>
           <span>sibandab@nzc.adventist.org / Password123!</span>
-        </div>
+        </div> */}
       </section>
     </main>
   );

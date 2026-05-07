@@ -50,16 +50,6 @@ export type ApprovalStage = (typeof APPROVAL_STAGES)[number];
 export const STEP_STATUSES = ["PENDING", "APPROVED", "DECLINED", "RETURNED", "SKIPPED"] as const;
 export type ApprovalStepStatus = (typeof STEP_STATUSES)[number];
 
-export const PRIORITIES = ["LOW", "NORMAL", "HIGH", "URGENT"] as const;
-export type Priority = (typeof PRIORITIES)[number];
-
-export const PRIORITY_LABELS: Record<Priority, string> = {
-  LOW: "Low",
-  NORMAL: "Normal",
-  HIGH: "High",
-  URGENT: "Urgent"
-};
-
 export const SERVICE_REQUEST_TYPES = [
   "Music Group",
   "Preaching Assignment",

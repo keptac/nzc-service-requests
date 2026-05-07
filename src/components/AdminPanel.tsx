@@ -1,10 +1,21 @@
 "use client";
 
-import { MessageCircle, Plus, Power, RotateCcw, Save } from "lucide-react";
+import {
+  Building2,
+  ClipboardList,
+  MessageCircle,
+  Plus,
+  Power,
+  RotateCcw,
+  Save,
+  ShieldCheck,
+  UsersRound
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { DataTable, type DataTableColumn } from "./DataTable";
 import { ROLE_NAMES } from "@/lib/constants";
+import { languageLabel, SUPPORTED_LANGUAGES } from "@/lib/languages";
 
 type BaseEntity = {
   id: string;
@@ -21,6 +32,7 @@ type UserEntity = {
   phoneSecondary?: string | null;
   whatsappNumber?: string | null;
   whatsappEnabled: boolean;
+  preferredLanguage: string;
   active: boolean;
   role: { name: string };
   union?: { name: string } | null;
@@ -40,6 +52,34 @@ type AdminPanelProps = {
 };
 
 type HierarchyTab = "unions" | "conferences" | "districts" | "churches";
+type AdminMenu = "hierarchy" | "users" | "requestTypes" | "roles";
+
+const ADMIN_MENUS: Array<{
+  key: AdminMenu;
+  label: string;
+  description: string;
+}> = [
+  {
+    key: "hierarchy",
+    label: "Hierarchy",
+    description: "Unions, conferences, districts, churches"
+  },
+  {
+    key: "users",
+    label: "Users",
+    description: "Accounts, scopes, WhatsApp access"
+  },
+  {
+    key: "requestTypes",
+    label: "Request Types",
+    description: "Service request categories"
+  },
+  {
+    key: "roles",
+    label: "Roles",
+    description: "Approval and access roles"
+  }
+];
 
 function formPayload(form: HTMLFormElement) {
   const formData = new FormData(form);
@@ -62,7 +102,14 @@ export function AdminPanel({
   const router = useRouter();
   const [error, setError] = useState("");
   const [pending, setPending] = useState<string | null>(null);
+  const [activeMenu, setActiveMenu] = useState<AdminMenu>("hierarchy");
   const [hierarchyTab, setHierarchyTab] = useState<HierarchyTab>("unions");
+  const menuCounts: Record<AdminMenu, number> = {
+    hierarchy: unions.length + conferences.length + districts.length + churches.length,
+    users: users.length,
+    requestTypes: requestTypes.length,
+    roles: roles.length
+  };
 
   async function api(resource: string, method: "POST" | "PATCH", payload: Record<string, unknown>) {
     setPending(`${method}-${resource}`);
@@ -123,7 +170,12 @@ export function AdminPanel({
       setError("Role name must match one of the configured roles.");
       return;
     }
-    await api("users", "PATCH", { id: user.id, name, email, roleName, phonePrimary, whatsappNumber });
+    const languageCodes = SUPPORTED_LANGUAGES.map((language) => language.code).join(", ");
+    const preferredLanguage = window.prompt(
+      `Preferred language code: ${languageCodes}`,
+      user.preferredLanguage
+    ) ?? user.preferredLanguage;
+    await api("users", "PATCH", { id: user.id, name, email, roleName, phonePrimary, whatsappNumber, preferredLanguage });
   }
 
   async function toggleWhatsApp(user: UserEntity) {
@@ -144,8 +196,28 @@ export function AdminPanel({
 
   return (
     <div className="admin-grid">
+      <nav className="admin-menu" aria-label="Admin management sections">
+        {ADMIN_MENUS.map((item) => (
+          <button
+            aria-current={activeMenu === item.key ? "page" : undefined}
+            className={`admin-menu-button ${activeMenu === item.key ? "active" : ""}`}
+            key={item.key}
+            onClick={() => setActiveMenu(item.key)}
+            type="button"
+          >
+            <AdminMenuIcon menu={item.key} />
+            <span>
+              <strong>{item.label}</strong>
+              <small>{item.description}</small>
+            </span>
+            <em>{menuCounts[item.key]}</em>
+          </button>
+        ))}
+      </nav>
+
       {error ? <div className="error-message">{error}</div> : null}
 
+      {activeMenu === "hierarchy" ? (
       <section className="entity-section">
         <div className="entity-header tabbed-entity-header">
           <div>
@@ -308,10 +380,15 @@ export function AdminPanel({
           ) : null}
         </div>
       </section>
+      ) : null}
 
+      {activeMenu === "users" ? (
       <section className="entity-section">
         <div className="entity-header">
-          <h2>Users</h2>
+          <div>
+            <h2>Users</h2>
+            <p>Manage user accounts, hierarchy assignments, and messaging access.</p>
+          </div>
         </div>
         <div className="entity-body">
           <form className="inline-form" onSubmit={(event) => create("users", event)}>
@@ -345,6 +422,16 @@ export function AdminPanel({
                 {roles.map((role) => (
                   <option key={role.id} value={role.name}>
                     {role.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <label htmlFor="user-language">Preferred language</label>
+              <select id="user-language" name="preferredLanguage" defaultValue="en">
+                {SUPPORTED_LANGUAGES.map((language) => (
+                  <option key={language.code} value={language.code}>
+                    {language.localLabel}
                   </option>
                 ))}
               </select>
@@ -401,10 +488,15 @@ export function AdminPanel({
           <UsersTable users={users} onEdit={editUser} onToggle={toggle} onToggleWhatsApp={toggleWhatsApp} />
         </div>
       </section>
+      ) : null}
 
+      {activeMenu === "requestTypes" ? (
       <section className="entity-section">
         <div className="entity-header">
-          <h2>Service Request Types</h2>
+          <div>
+            <h2>Service Request Types</h2>
+            <p>Manage the categories clerks can select when creating requests.</p>
+          </div>
         </div>
         <div className="entity-body">
           <form className="inline-form compact" onSubmit={(event) => create("requestTypes", event)}>
@@ -420,17 +512,30 @@ export function AdminPanel({
           <EntityTable entities={requestTypes} resource="requestTypes" onEdit={editEntity} onToggle={toggle} />
         </div>
       </section>
+      ) : null}
 
+      {activeMenu === "roles" ? (
       <section className="entity-section">
         <div className="entity-header">
-          <h2>Roles</h2>
+          <div>
+            <h2>Roles</h2>
+            <p>Review the configured access and approval roles.</p>
+          </div>
         </div>
         <div className="entity-body">
           <RolesTable roles={roles} />
         </div>
       </section>
+      ) : null}
     </div>
   );
+}
+
+function AdminMenuIcon({ menu }: { menu: AdminMenu }) {
+  if (menu === "hierarchy") return <Building2 size={18} aria-hidden="true" />;
+  if (menu === "users") return <UsersRound size={18} aria-hidden="true" />;
+  if (menu === "requestTypes") return <ClipboardList size={18} aria-hidden="true" />;
+  return <ShieldCheck size={18} aria-hidden="true" />;
 }
 
 function EntityTable({
@@ -524,6 +629,12 @@ function UsersTable({
       )
     },
     { key: "role", header: "Role", cell: (item) => item.role.name, sortValue: (item) => item.role.name },
+    {
+      key: "language",
+      header: "Language",
+      cell: (item) => languageLabel(item.preferredLanguage),
+      sortValue: (item) => languageLabel(item.preferredLanguage)
+    },
     { key: "scope", header: "Scope", cell: scopeForUser, sortValue: scopeForUser },
     {
       key: "whatsapp",
@@ -569,7 +680,7 @@ function UsersTable({
       columns={columns}
       emptyMessage="No users found."
       getSearchText={(item) =>
-        `${item.name} ${item.email} ${item.role.name} ${scopeForUser(item)} ${item.whatsappNumber ?? ""} ${
+        `${item.name} ${item.email} ${item.role.name} ${languageLabel(item.preferredLanguage)} ${scopeForUser(item)} ${item.whatsappNumber ?? ""} ${
           item.phonePrimary ?? ""
         }`
       }

@@ -77,11 +77,13 @@ Many additional clerk, assistant clerk, district coordinator, and district pasto
 - Hierarchy management: unions, conferences, districts, local churches
 - User and role management
 - Configurable service request types
-- Request creation with priority, date required, targets, notes, and attachments
+- Request creation with date required, targets, notes, and attachments
+- Step-by-step request creation with preferred language support for English, Shona, Ndebele, Swahili, Tonga, Venda, Portuguese, and other regional languages
 - Workflow routing:
   - Same district: district pastor, destination church acceptance
-  - Cross-district same conference: district pastor, conference, destination church acceptance
-  - Cross-conference: district pastor, conference, union, destination church acceptance
+  - Cross-district same conference: district pastor, requesting conference, destination church acceptance
+  - Cross-conference same union: district pastor, requesting conference, requesting union, destination conference, destination church acceptance
+  - Cross-union: district pastor, requesting conference, requesting union, destination union, destination conference, destination church acceptance
 - Approval actions: approve, decline, return for clarification, cancel, resubmit, manual escalation
 - Destination church acceptance requires a minute number, which is used as the PDF board action number
 - Required comments for decline and return
@@ -136,6 +138,8 @@ Tests cover workflow routing and role permissions.
 - Low-cost AWS Lightsail deployment files are in `deploy/aws`.
 - The GitHub Actions workflow for CI/CD is `.github/workflows/deploy-aws.yml`.
 - This app is dynamic Next.js, so the recommended deployment runs the whole app on Lightsail behind Caddy.
+- Production startup runs an idempotent bootstrap that creates roles, request types, the configured Super Admin, imported ZEUC hierarchy/users from `prisma/seed/*.csv` when `BOOTSTRAP_IMPORT_SEED_DATA=true`, and two sample requests when `BOOTSTRAP_CREATE_SAMPLE_REQUESTS=true`.
+- Keep `RUN_SEED=false` in production. `pnpm prisma db seed` clears and recreates demo data.
 - Recommended AWS resources: one Lightsail instance, one Lightsail static IP, and one DNS `A` record.
 - PostgreSQL runs in Docker on the Lightsail instance for the low-cost setup. Move to managed PostgreSQL later if you need managed backups, failover, or higher availability.
 - Set a strong `AUTH_SECRET`.

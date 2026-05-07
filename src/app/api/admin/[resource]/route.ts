@@ -54,6 +54,7 @@ export async function POST(request: Request, { params }: { params: { resource: s
       phoneSecondary?: string | null;
       whatsappNumber?: string | null;
       whatsappEnabled?: boolean;
+      preferredLanguage?: string;
       unionId?: string | null;
       conferenceId?: string | null;
       districtId?: string | null;
@@ -82,6 +83,7 @@ export async function POST(request: Request, { params }: { params: { resource: s
         whatsappNumber,
         whatsappEnabled,
         whatsappEnabledAt: whatsappEnabled ? new Date() : null,
+        preferredLanguage: data.preferredLanguage,
         roleId: role.id,
         unionId: nullableId(data.unionId),
         conferenceId: nullableId(data.conferenceId),
@@ -132,6 +134,7 @@ export async function PATCH(request: Request, { params }: { params: { resource: 
       phoneSecondary?: string | null;
       whatsappNumber?: string | null;
       whatsappEnabled?: boolean;
+      preferredLanguage?: string;
       unionId?: string | null;
       conferenceId?: string | null;
       districtId?: string | null;
@@ -184,6 +187,7 @@ export async function PATCH(request: Request, { params }: { params: { resource: 
             : whatsappNumber,
         whatsappEnabled: nextWhatsAppEnabled,
         whatsappEnabledAt,
+        preferredLanguage: data.preferredLanguage,
         roleId: role?.id,
         unionId: data.unionId === undefined ? undefined : nullableId(data.unionId),
         conferenceId: data.conferenceId === undefined ? undefined : nullableId(data.conferenceId),

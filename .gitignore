@@ -9,5 +9,4 @@ coverage
 *.db-journal
 uploads
 public/uploads
-prisma/seed/
 deploy/aws/lightsail.env

@@ -8,6 +8,7 @@ function user(roleName: AuthUser["roleName"], scope: Partial<AuthUser> = {}): Au
     name: "Test User",
     email: "test@sda.local",
     roleName,
+    preferredLanguage: "en",
     active: true,
     unionId: null,
     conferenceId: null,
@@ -45,9 +46,15 @@ describe("role permissions", () => {
     expect(canCreateRequest(clerk, "church-b")).toBe(false);
   });
 
-  it("hides request creation from roles without clerk create rights", () => {
+  it("allows super admin to create requests for any church", () => {
+    const admin = user("Super Admin");
+    expect(canAccessCreateRequest(admin)).toBe(true);
+    expect(canCreateRequest(admin, "church-a")).toBe(true);
+    expect(canCreateRequest(admin, "church-b")).toBe(true);
+  });
+
+  it("hides request creation from roles without clerk or super admin create rights", () => {
     expect(canAccessCreateRequest(user("District Pastor", { districtId: "district-a" }))).toBe(false);
-    expect(canAccessCreateRequest(user("Super Admin"))).toBe(false);
     expect(canAccessCreateRequest(user("Church Clerk"))).toBe(false);
   });
 

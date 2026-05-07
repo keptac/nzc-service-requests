@@ -7,6 +7,7 @@ import { notifyNextApprovers, notifyRequester } from "./notifications";
 import { normalizeWhatsAppNumber } from "./phone";
 import { resolveRequestSignatories } from "./signatories";
 import { statusLabel } from "./format";
+import { normalizeLanguage } from "./languages";
 import type { ApprovalStage, RequestStatus } from "./constants";
 import type { AuthUser } from "./types";
 
@@ -15,6 +16,7 @@ type CommandUser = {
   name: string;
   email: string;
   active: boolean;
+  preferredLanguage: string;
   unionId: string | null;
   conferenceId: string | null;
   districtId: string | null;
@@ -29,6 +31,7 @@ function authUser(user: CommandUser): AuthUser {
     email: user.email,
     active: user.active,
     roleName: user.role.name as AuthUser["roleName"],
+    preferredLanguage: normalizeLanguage(user.preferredLanguage),
     unionId: user.unionId,
     conferenceId: user.conferenceId,
     districtId: user.districtId,
@@ -319,7 +322,6 @@ async function createRequestFromWhatsApp(user: AuthUser, rest: string) {
       clericalOfficePhone: signatories.clericalOfficePhone,
       districtPastorName: signatories.districtPastorName,
       districtPastorPhone: signatories.districtPastorPhone,
-      priority: "NORMAL",
       requesterId: user.id,
       status: firstStep ? nextPendingStatus(firstStep.stage) : ("DRAFT" satisfies RequestStatus),
       currentStepOrder: firstStep?.stepOrder,

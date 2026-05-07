@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "./prisma";
 import type { AuthUser } from "./types";
 import type { RoleName } from "./constants";
+import { normalizeLanguage } from "./languages";
 
 const COOKIE_NAME = "sda_session";
 const SESSION_DAYS = 7;
@@ -74,6 +75,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
       name: user.name,
       email: user.email,
       roleName: user.role.name as RoleName,
+      preferredLanguage: normalizeLanguage(user.preferredLanguage),
       active: user.active,
       unionId: user.unionId,
       conferenceId: user.conferenceId,

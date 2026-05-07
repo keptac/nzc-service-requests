@@ -407,7 +407,6 @@ async function createSampleRequests(requestTypes: Record<ServiceRequestTypeName,
     requestingChurch: nzcRequester.church,
     targetChurch: nzcPeer,
     requester: nzcRequester,
-    priority: "NORMAL",
     serviceRequired: "Music ministry",
     nameSuggested: `${nzcRequester.church.name} music group`
   });
@@ -420,7 +419,6 @@ async function createSampleRequests(requestTypes: Record<ServiceRequestTypeName,
     requestingChurch: ezcRequester.church,
     targetChurch: nzcRequester.church,
     requester: ezcRequester,
-    priority: "HIGH",
     serviceRequired: "Preaching",
     nameSuggested: ezcRequester.name
   });
@@ -433,7 +431,6 @@ async function createSampleRequests(requestTypes: Record<ServiceRequestTypeName,
     requestingChurch: ezcRequester.church,
     targetChurch: ezcPeer,
     requester: ezcRequester,
-    priority: "NORMAL",
     serviceRequired: "Training",
     nameSuggested: "ZEUC clerk training team",
     requiredToDate: new Date("2026-06-14")
@@ -447,7 +444,6 @@ async function createSampleRequests(requestTypes: Record<ServiceRequestTypeName,
     requestingChurch: NonNullable<(typeof users)[number]["church"]>;
     targetChurch: (typeof churches)[number];
     requester: (typeof users)[number];
-    priority: string;
     serviceRequired: string;
     nameSuggested: string;
     requiredToDate?: Date;
@@ -475,7 +471,6 @@ async function createSampleRequests(requestTypes: Record<ServiceRequestTypeName,
         targetChurchId: input.targetChurch.id,
         proposedDate: new Date("2026-06-06"),
         requiredToDate: input.requiredToDate,
-        priority: input.priority,
         requesterId: input.requester.id,
         contactPerson: input.requester.name,
         contactEmail: input.requester.email,

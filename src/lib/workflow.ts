@@ -10,7 +10,12 @@ export function workflowStepForStage(
   stage: ApprovalStage,
   stepOrder: number,
   requestingChurch: ChurchHierarchy,
-  target: WorkflowTarget = {}
+  target: WorkflowTarget = {},
+  options: {
+    assignedConferenceId?: string;
+    assignedUnionId?: string;
+    assignedRoleGroupPrefix?: string;
+  } = {}
 ): WorkflowStepInput {
   if (stage === "DESTINATION") {
     if (!target.church || target.church.id === requestingChurch.id) {
@@ -40,18 +45,24 @@ export function workflowStepForStage(
     return {
       stage,
       stepOrder,
-      assignedRoleGroup: APPROVER_ROLES.CONFERENCE.join(", "),
+      assignedRoleGroup: [
+        options.assignedRoleGroupPrefix,
+        APPROVER_ROLES.CONFERENCE.join(", ")
+      ].filter(Boolean).join(": "),
       assignedScopeType: "CONFERENCE",
-      assignedConferenceId: requestingChurch.district.conference.id
+      assignedConferenceId: options.assignedConferenceId ?? requestingChurch.district.conference.id
     };
   }
 
   return {
     stage,
     stepOrder,
-    assignedRoleGroup: APPROVER_ROLES.UNION.join(", "),
+    assignedRoleGroup: [
+      options.assignedRoleGroupPrefix,
+      APPROVER_ROLES.UNION.join(", ")
+    ].filter(Boolean).join(": "),
     assignedScopeType: "UNION",
-    assignedUnionId: requestingChurch.district.conference.union.id
+    assignedUnionId: options.assignedUnionId ?? requestingChurch.district.conference.union.id
   };
 }
 
@@ -59,7 +70,7 @@ export function determineApprovalPath(
   requestingChurch: ChurchHierarchy,
   target: WorkflowTarget = {}
 ): WorkflowStepInput[] {
-  const stages: ApprovalStage[] = ["PASTOR"];
+  const steps: WorkflowStepInput[] = [];
   const requestDistrictId = requestingChurch.district.id;
   const requestConferenceId = requestingChurch.district.conference.id;
   const requestUnionId = requestingChurch.district.conference.union.id;
@@ -74,39 +85,67 @@ export function determineApprovalPath(
     target.union?.id ??
     null;
 
-  const mapStages = () => {
-    const steps = stages.map((stage, index) => workflowStepForStage(stage, index + 1, requestingChurch));
-    if (!target.church || target.church.id === requestingChurch.id) return steps;
-
-    return [
-      ...steps,
-      workflowStepForStage("DESTINATION", steps.length + 1, requestingChurch, { church: target.church })
-    ];
+  const addRequestingStage = (stage: ApprovalStage) => {
+    const prefix = stage === "CONFERENCE" ? "Requesting Conference" : stage === "UNION" ? "Requesting Union" : undefined;
+    steps.push(
+      workflowStepForStage(stage, steps.length + 1, requestingChurch, {}, { assignedRoleGroupPrefix: prefix })
+    );
   };
 
-  if (resolvedTargetDistrictId && resolvedTargetDistrictId === requestDistrictId) {
-    return mapStages();
-  }
-
-  if (resolvedTargetConferenceId && resolvedTargetConferenceId !== requestConferenceId) {
-    stages.push("CONFERENCE");
-    if (resolvedTargetUnionId !== requestUnionId || resolvedTargetConferenceId !== requestConferenceId) {
-      stages.push("UNION");
+  const addDestinationStage = (stage: Extract<ApprovalStage, "CONFERENCE" | "UNION">) => {
+    if (stage === "UNION" && resolvedTargetUnionId) {
+      steps.push(
+        workflowStepForStage(stage, steps.length + 1, requestingChurch, {}, {
+          assignedRoleGroupPrefix: "Destination Union",
+          assignedUnionId: resolvedTargetUnionId
+        })
+      );
     }
-    return mapStages();
-  }
 
-  if (resolvedTargetConferenceId && resolvedTargetConferenceId === requestConferenceId) {
-    stages.push("CONFERENCE");
-    return mapStages();
+    if (stage === "CONFERENCE" && resolvedTargetConferenceId) {
+      steps.push(
+        workflowStepForStage(stage, steps.length + 1, requestingChurch, {}, {
+          assignedRoleGroupPrefix: "Destination Conference",
+          assignedConferenceId: resolvedTargetConferenceId
+        })
+      );
+    }
+  };
+
+  const addDestinationChurchAcceptance = () => {
+    if (!target.church || target.church.id === requestingChurch.id) return steps;
+
+    steps.push(workflowStepForStage("DESTINATION", steps.length + 1, requestingChurch, { church: target.church }));
+    return steps;
+  };
+
+  addRequestingStage("PASTOR");
+
+  if (resolvedTargetDistrictId && resolvedTargetDistrictId === requestDistrictId) {
+    return addDestinationChurchAcceptance();
   }
 
   if (resolvedTargetUnionId && resolvedTargetUnionId !== requestUnionId) {
-    stages.push("CONFERENCE", "UNION");
-    return mapStages();
+    addRequestingStage("CONFERENCE");
+    addRequestingStage("UNION");
+    addDestinationStage("UNION");
+    addDestinationStage("CONFERENCE");
+    return addDestinationChurchAcceptance();
   }
 
-  return mapStages();
+  if (resolvedTargetConferenceId && resolvedTargetConferenceId === requestConferenceId) {
+    addRequestingStage("CONFERENCE");
+    return addDestinationChurchAcceptance();
+  }
+
+  if (resolvedTargetConferenceId && resolvedTargetConferenceId !== requestConferenceId) {
+    addRequestingStage("CONFERENCE");
+    addRequestingStage("UNION");
+    addDestinationStage("CONFERENCE");
+    return addDestinationChurchAcceptance();
+  }
+
+  return addDestinationChurchAcceptance();
 }
 
 export function nextPendingStatus(stage: ApprovalStage): RequestStatus {

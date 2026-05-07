@@ -162,6 +162,7 @@ Set at least:
 - `WHATSAPP_WEBHOOK_TOKEN`
 - `BOOTSTRAP_ADMIN_EMAIL`
 - `BOOTSTRAP_ADMIN_PASSWORD`
+- `SEED_USER_PASSWORD`
 
 Generate secrets with:
 
@@ -183,7 +184,9 @@ Open:
 https://YOUR_APP_DOMAIN/api/health
 ```
 
-The app runs a production bootstrap on startup. It creates roles, default request types, and the Super Admin configured by `BOOTSTRAP_ADMIN_EMAIL` and `BOOTSTRAP_ADMIN_PASSWORD`. On a fresh database with no users, those admin variables are required and startup will fail without them. Placeholder values from `lightsail.env.example` are rejected; set real values before deploying. Change that password after first login.
+The app runs a production bootstrap on startup. It creates roles, default request types, and the Super Admin configured by `BOOTSTRAP_ADMIN_EMAIL` and `BOOTSTRAP_ADMIN_PASSWORD`. It also imports the ZEUC hierarchy and seed users from `prisma/seed/*.csv` when `BOOTSTRAP_IMPORT_SEED_DATA=true`, then creates two idempotent sample requests when `BOOTSTRAP_CREATE_SAMPLE_REQUESTS=true`. That production import is idempotent and does not delete production data. Keep `RUN_SEED=false` unless you intentionally want the destructive Prisma seed script.
+
+On a fresh database with no users, the admin variables are required and startup will fail without them. Placeholder values from `lightsail.env.example` are rejected; set real values before deploying. Change the bootstrap admin and seed user passwords after first login.
 
 ## GitHub Actions CI/CD
 

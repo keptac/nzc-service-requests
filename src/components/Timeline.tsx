@@ -32,21 +32,35 @@ export function Timeline({ steps, currentStepOrder }: { steps: Step[]; currentSt
       {steps.map((step) => {
         const Icon = iconFor(step.status);
         const pending = step.status === "PENDING" && step.stepOrder === currentStepOrder;
+        const statusLabel = pending
+          ? "Current stage"
+          : step.status === "APPROVED"
+            ? "Completed"
+            : step.status === "DECLINED"
+              ? "Declined"
+              : step.status === "RETURNED"
+                ? "Returned"
+                : step.status === "PENDING"
+                  ? "Queued"
+                  : step.status;
         return (
-          <div className="timeline-step" key={step.id}>
+          <div className="timeline-step" key={step.id} aria-current={pending ? "step" : undefined}>
             <div className={`timeline-dot ${step.status.toLowerCase()} ${pending ? "pending" : ""}`}>
               <Icon size={16} aria-hidden="true" />
             </div>
-            <div className="timeline-card">
-              <strong>
-                {step.stepOrder}. {stageDisplayName(step.stage)}
-              </strong>
+            <div className={`timeline-card ${pending ? "current" : ""}`}>
+              <div className="timeline-stage-heading">
+                <strong>
+                  {step.stepOrder}. {stageDisplayName(step.stage)}
+                </strong>
+                <span className={pending ? "timeline-current-label" : "timeline-status-label"}>{statusLabel}</span>
+              </div>
               <p>{step.assignedRoleGroup}</p>
               <p>
                 {step.actedBy?.name
                   ? `${step.status.toLowerCase()} by ${step.actedBy.name} on ${formatDateTime(step.actedAt)}`
                   : pending
-                    ? "Awaiting action"
+                    ? `Awaiting action from ${step.assignedRoleGroup}`
                     : "Queued"}
               </p>
               {step.minuteNumber ? <p>Minute number: {step.minuteNumber}</p> : null}

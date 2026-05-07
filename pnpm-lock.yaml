@@ -20,6 +20,9 @@ importers:
       date-fns:
         specifier: 3.6.0
         version: 3.6.0
+      i18next:
+        specifier: ^26.0.10
+        version: 26.0.10(typescript@5.4.5)
       jsonwebtoken:
         specifier: 9.0.2
         version: 9.0.2
@@ -923,6 +926,14 @@ packages:
   human-signals@5.0.0:
     resolution: {integrity: sha512-AXcZb6vzzrFAUE61HnN4mpLqd/cSIwNQjtNWR0euPm6y0iqx3G4gOXaIDdtdDwZmhwe82LA6+zinmW4UBWVePQ==}
     engines: {node: '>=16.17.0'}
+
+  i18next@26.0.10:
+    resolution: {integrity: sha512-k3yGPAlWR2RdMYoVXJoDZDT87qeHIWKH7gVksdZMpRty7QX/D9QZeYGvN08KGbKHke9wn01eYT+EEsrqX/YTlw==}
+    peerDependencies:
+      typescript: ^5 || ^6
+    peerDependenciesMeta:
+      typescript:
+        optional: true
 
   is-stream@3.0.0:
     resolution: {integrity: sha512-LnQR4bZ9IADDRSkvpqMGvt/tEJWclzklNgSw48V5EAaAeDd6qGvN8ei6k5p0tvxSR171VmGyHuTiAOfxAbr8kA==}
@@ -1937,6 +1948,10 @@ snapshots:
   graceful-fs@4.2.11: {}
 
   human-signals@5.0.0: {}
+
+  i18next@26.0.10(typescript@5.4.5):
+    optionalDependencies:
+      typescript: 5.4.5
 
   is-stream@3.0.0: {}
 

@@ -51,7 +51,6 @@ export async function POST(request: Request) {
     firstElderPhone: optionalString(formData.get("firstElderPhone")),
     districtPastorName: optionalString(formData.get("districtPastorName")),
     districtPastorPhone: optionalString(formData.get("districtPastorPhone")),
-    priority: optionalString(formData.get("priority")) ?? "NORMAL",
     additionalNotes: optionalString(formData.get("additionalNotes")),
     saveAsDraft: formData.get("saveAsDraft") === "true"
   });
@@ -156,7 +155,6 @@ export async function POST(request: Request) {
       firstElderPhone: payload.data.firstElderPhone,
       districtPastorName: signatories.districtPastorName,
       districtPastorPhone: signatories.districtPastorPhone,
-      priority: payload.data.priority,
       additionalNotes: payload.data.additionalNotes,
       requesterId: user.id,
       status: firstStep ? nextPendingStatus(firstStep.stage) : "DRAFT",

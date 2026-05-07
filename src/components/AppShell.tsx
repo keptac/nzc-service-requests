@@ -1,4 +1,5 @@
 import { Brand } from "./Brand";
+import { LanguagePreferenceSelect } from "./LanguagePreferenceSelect";
 import { NavLink } from "./NavLink";
 import { LogoutButton } from "./LogoutButton";
 import { canAccessCreateRequest, canManageAdmin } from "@/lib/permissions";
@@ -27,6 +28,7 @@ export function AppShell({ user, children }: { user: AuthUser; children: React.R
           ))}
         </nav>
         <div className="sidebar-footer">
+          <LanguagePreferenceSelect value={user.preferredLanguage} compact />
           <div className="user-chip">
             <div className="avatar small">{user.name.slice(0, 2).toUpperCase()}</div>
             <strong>{user.name}</strong>
@@ -39,7 +41,10 @@ export function AppShell({ user, children }: { user: AuthUser; children: React.R
       <main className="main">
         <div className="topbar">
           <Brand compact />
-          <LogoutButton />
+          <div className="topbar-actions">
+            <LanguagePreferenceSelect value={user.preferredLanguage} compact />
+            <LogoutButton />
+          </div>
         </div>
         {children}
       </main>

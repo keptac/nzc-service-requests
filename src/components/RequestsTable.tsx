@@ -14,8 +14,9 @@ import {
   X
 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { StatusBadge, PriorityBadge } from "./Badges";
+import { StatusBadge } from "./Badges";
 import { RequestActions } from "./RequestActions";
+import { Timeline } from "./Timeline";
 import { formatDateRange, fromNow } from "@/lib/format";
 import {
   canActOnStep,
@@ -39,7 +40,7 @@ function destinationFor(request: RequestRow) {
   );
 }
 
-type SortKey = "request" | "status" | "type" | "church" | "date" | "priority" | "updated";
+type SortKey = "request" | "status" | "type" | "church" | "date" | "updated";
 
 const sortableColumns: Record<SortKey, string> = {
   request: "Request",
@@ -47,7 +48,6 @@ const sortableColumns: Record<SortKey, string> = {
   type: "Type",
   church: "Church",
   date: "Date Required",
-  priority: "Priority",
   updated: "Updated"
 };
 
@@ -78,7 +78,6 @@ function requestSearchText(request: RequestRow) {
     request.requestingChurch.district.name,
     request.requestingChurch.district.conference.name,
     destinationFor(request),
-    request.priority,
     request.contactPerson
   ]
     .filter(Boolean)
@@ -92,7 +91,6 @@ function requestSortValue(request: RequestRow, sortKey: SortKey) {
   if (sortKey === "type") return request.type.name.toLowerCase();
   if (sortKey === "church") return request.requestingChurch.name.toLowerCase();
   if (sortKey === "date") return request.proposedDate ? new Date(request.proposedDate).getTime() : 0;
-  if (sortKey === "priority") return request.priority;
   return new Date(request.updatedAt).getTime();
 }
 
@@ -229,9 +227,6 @@ export function RequestsTable({
                   <SortHeader column="date" />
                 </th>
                 <th>
-                  <SortHeader column="priority" />
-                </th>
-                <th>
                   <SortHeader column="updated" />
                 </th>
                 <th>{dialogView ? "View" : "Open"}</th>
@@ -267,9 +262,6 @@ export function RequestsTable({
                         <CalendarDays size={14} aria-hidden="true" />
                         {formatDateRange(request.proposedDate, request.requiredToDate)}
                       </span>
-                    </td>
-                    <td>
-                      <PriorityBadge priority={request.priority} />
                     </td>
                     <td>{fromNow(request.updatedAt)}</td>
                     <td>
@@ -369,7 +361,6 @@ export function RequestsTable({
 
                   <div className="button-row request-dialog-actions">
                     <StatusBadge status={request.status} />
-                    <PriorityBadge priority={request.priority} />
                     <a className="button secondary" href={`/api/requests/${request.id}/pdf`}>
                       <Download size={16} aria-hidden="true" />
                       Download PDF
@@ -410,6 +401,10 @@ export function RequestsTable({
                       <strong>{destinationFor(request)}</strong>
                     </div>
                     <div className="detail-item">
+                      <span>Current Stage</span>
+                      <strong>{pendingStep ? pendingStep.assignedRoleGroup : "No pending approval stage"}</strong>
+                    </div>
+                    <div className="detail-item">
                       <span>Contact Person</span>
                       <strong>{request.contactPerson}</strong>
                     </div>
@@ -417,6 +412,14 @@ export function RequestsTable({
                       <span>Event Description</span>
                       <p>{request.description}</p>
                     </div>
+                  </div>
+
+                  <div className="request-dialog-timeline">
+                    <div className="request-dialog-section-header">
+                      <h3>Approval Timeline</h3>
+                      <p>Steps completed and the current pending stage.</p>
+                    </div>
+                    <Timeline steps={request.approvalSteps} currentStepOrder={request.currentStepOrder} />
                   </div>
                 </div>
               </div>

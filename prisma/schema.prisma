@@ -26,6 +26,7 @@ model User {
   whatsappNumber    String?           @map("whatsapp_number")
   whatsappEnabled   Boolean           @default(false) @map("whatsapp_enabled")
   whatsappEnabledAt DateTime?         @map("whatsapp_enabled_at")
+  preferredLanguage String            @default("en") @map("preferred_language")
   isSeedUser        Boolean           @default(false) @map("is_seed_user")
   dataQualityStatus String            @default("clean") @map("data_quality_status")
   active            Boolean           @default(true)

@@ -1,8 +1,9 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, Download, Paperclip } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
-import { StatusBadge, PriorityBadge } from "@/components/Badges";
+import { StatusBadge } from "@/components/Badges";
 import { Timeline } from "@/components/Timeline";
 import { CommentsThread } from "@/components/CommentsThread";
 import { RequestActions } from "@/components/RequestActions";
@@ -87,7 +88,6 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
           </div>
           <div className="button-row">
             <StatusBadge status={request.status} />
-            <PriorityBadge priority={request.priority} />
             <a className="button secondary" href={`/api/requests/${request.id}/pdf`}>
               <Download size={16} aria-hidden="true" />
               Download PDF
@@ -127,100 +127,54 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
                 <p>Submitted by {request.requester.name}.</p>
               </div>
             </div>
-            <div className="panel-body detail-grid">
-              <div className="detail-item">
-                <span>Type</span>
-                <strong>{request.type.name}</strong>
-              </div>
-              <div className="detail-item">
-                <span>Service Required</span>
-                <strong>{request.serviceRequired ?? request.type.name}</strong>
-              </div>
-              <div className="detail-item">
-                <span>Current Status</span>
+            <dl className="panel-body request-info-list">
+              <DetailRow label="Type">{request.type.name}</DetailRow>
+              <DetailRow label="Service Required">{request.serviceRequired ?? request.type.name}</DetailRow>
+              <DetailRow label="Current Status">
                 <StatusBadge status={request.status} />
-              </div>
-              <div className="detail-item">
-                <span>Presentation Method</span>
-                <strong>{request.presentationMethod ?? "Not set"}</strong>
-              </div>
-              <div className="detail-item">
-                <span>Requesting Church</span>
+              </DetailRow>
+              <DetailRow label="Current Stage">
+                {pendingStep ? pendingStep.assignedRoleGroup : "No pending approval stage"}
+              </DetailRow>
+              <DetailRow label="Presentation Method">{request.presentationMethod ?? "Not set"}</DetailRow>
+              <DetailRow label="Requesting Church">
                 <strong>{request.requestingChurch.name}</strong>
-                <p className="muted">
+                <span className="muted">
                   {request.requestingChurch.district.name}, {request.requestingChurch.district.conference.name}
-                </p>
-              </div>
-              <div className="detail-item">
-                <span>Target</span>
-                <strong>{destination}</strong>
-              </div>
-              <div className="detail-item">
-                <span>From Where</span>
-                <strong>{fromWhere}</strong>
-              </div>
-              <div className="detail-item">
-                <span>Where Required</span>
-                <strong>{whereRequired}</strong>
-              </div>
-              <div className="detail-item">
-                <span>Date Required</span>
-                <strong>{formatDateRange(request.proposedDate, request.requiredToDate)}</strong>
-              </div>
-              <div className="detail-item">
-                <span>Contact Person</span>
-                <strong>{request.contactPerson}</strong>
-              </div>
-              <div className="detail-item">
-                <span>Email</span>
-                <strong>{request.contactEmail ?? request.requester.email}</strong>
-              </div>
-              <div className="detail-item">
-                <span>Name Suggested</span>
-                <strong>{request.nameSuggested ?? "Not set"}</strong>
-              </div>
-              <div className="detail-item">
-                <span>Board Action Number</span>
-                <strong>{recordedMinuteNumber ?? "Not set"}</strong>
-              </div>
-              <div className="detail-item">
-                <span>Expenses Incurred By</span>
-                <strong>{request.expensesIncurredBy ?? request.requestingChurch.name}</strong>
-              </div>
-              <div className="detail-item full">
-                <span>Event Description</span>
-                <p>{request.description}</p>
-              </div>
-              <div className="detail-item full">
-                <span>PDF Signatories</span>
-                <p>
+                </span>
+              </DetailRow>
+              <DetailRow label="Target">{destination}</DetailRow>
+              <DetailRow label="From Where">{fromWhere}</DetailRow>
+              <DetailRow label="Where Required">{whereRequired}</DetailRow>
+              <DetailRow label="Date Required">{formatDateRange(request.proposedDate, request.requiredToDate)}</DetailRow>
+              <DetailRow label="Contact Person">{request.contactPerson}</DetailRow>
+              <DetailRow label="Email">{request.contactEmail ?? request.requester.email}</DetailRow>
+              <DetailRow label="Name Suggested">{request.nameSuggested ?? "Not set"}</DetailRow>
+              <DetailRow label="Board Action Number">{recordedMinuteNumber ?? "Not set"}</DetailRow>
+              <DetailRow label="Expenses Incurred By">
+                {request.expensesIncurredBy ?? request.requestingChurch.name}
+              </DetailRow>
+              <DetailRow label="Event Description">{request.description}</DetailRow>
+              <DetailRow label="PDF Signatories">
+                <span>
                   Clerical Office: {request.clericalOfficeName ?? request.contactPerson}
                   {request.clericalOfficePhone ? ` (${request.clericalOfficePhone})` : ""}
-                </p>
-                <p>
+                </span>
+                <span>
                   First Elder: {request.firstElderName ?? "Not set"}
                   {request.firstElderPhone ? ` (${request.firstElderPhone})` : ""}
-                </p>
-                <p>
+                </span>
+                <span>
                   District Pastor: {request.districtPastorName ?? "Not set"}
                   {request.districtPastorPhone ? ` (${request.districtPastorPhone})` : ""}
-                </p>
-              </div>
+                </span>
+              </DetailRow>
               {request.additionalNotes ? (
-                <div className="detail-item full">
-                  <span>Additional Notes</span>
-                  <p>{request.additionalNotes}</p>
-                </div>
+                <DetailRow label="Additional Notes">{request.additionalNotes}</DetailRow>
               ) : null}
-              <div className="detail-item">
-                <span>Created</span>
-                <strong>{formatDateTime(request.createdAt)}</strong>
-              </div>
-              <div className="detail-item">
-                <span>Updated</span>
-                <strong>{formatDateTime(request.updatedAt)}</strong>
-              </div>
-            </div>
+              <DetailRow label="Created">{formatDateTime(request.createdAt)}</DetailRow>
+              <DetailRow label="Updated">{formatDateTime(request.updatedAt)}</DetailRow>
+            </dl>
           </div>
 
           <div className="panel">
@@ -316,5 +270,14 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
         </section>
       </div>
     </AppShell>
+  );
+}
+
+function DetailRow({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="request-info-row">
+      <dt>{label}</dt>
+      <dd>{children}</dd>
+    </div>
   );
 }

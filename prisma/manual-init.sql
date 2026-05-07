@@ -69,6 +69,7 @@ CREATE TABLE IF NOT EXISTS "User" (
   "name" TEXT NOT NULL,
   "email" TEXT NOT NULL,
   "passwordHash" TEXT NOT NULL,
+  "preferred_language" TEXT NOT NULL DEFAULT 'en',
   "active" BOOLEAN NOT NULL DEFAULT true,
   "roleId" TEXT NOT NULL,
   "unionId" TEXT,

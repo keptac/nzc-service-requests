@@ -1,4 +1,5 @@
 import type { ApprovalStage, RoleName } from "./constants";
+import type { LanguageCode } from "./languages";
 
 export type ChurchHierarchy = {
   id: string;
@@ -61,6 +62,7 @@ export type AuthUser = {
   name: string;
   email: string;
   roleName: RoleName;
+  preferredLanguage: LanguageCode;
   active: boolean;
   unionId: string | null;
   conferenceId: string | null;

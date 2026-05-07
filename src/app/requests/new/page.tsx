@@ -1,7 +1,7 @@
 import { AppShell } from "@/components/AppShell";
 import { RequestForm } from "@/components/RequestForm";
 import { requireUser } from "@/lib/auth";
-import { canAccessCreateRequest } from "@/lib/permissions";
+import { canAccessCreateRequest, isSuperAdmin } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { resolveRequestSignatories } from "@/lib/signatories";
 
@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 
 export default async function NewRequestPage() {
   const user = await requireUser();
+  const superAdmin = isSuperAdmin(user);
   const canCreate = canAccessCreateRequest(user);
 
   const [types, allChurches, districts, conferences, unions, signatories] = await Promise.all([
@@ -24,11 +25,16 @@ export default async function NewRequestPage() {
           clericalOfficePhone: null,
           districtPastorName: null,
           districtPastorPhone: null,
-          preview: { clericalOffice: "Not set", districtPastor: "Not set" }
+          preview: {
+            clericalOffice: superAdmin ? "Resolved from selected church" : "Not set",
+            districtPastor: superAdmin ? "Resolved from selected church" : "Not set"
+          }
         })
   ]);
 
-  const requestingChurches = allChurches.filter((church) => church.id === user.churchId);
+  const requestingChurches = superAdmin
+    ? allChurches
+    : allChurches.filter((church) => church.id === user.churchId);
 
   if (!canCreate) {
     return (

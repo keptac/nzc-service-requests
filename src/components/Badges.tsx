@@ -1,5 +1,5 @@
 import { CheckCircle2, Clock3, FileText, HelpCircle, OctagonX, XCircle } from "lucide-react";
-import { priorityLabel, statusLabel } from "@/lib/format";
+import { statusLabel } from "@/lib/format";
 
 function statusClass(status: string) {
   if (status === "APPROVED") return "status-approved";
@@ -30,8 +30,4 @@ export function StatusBadge({ status }: { status: string }) {
       {statusLabel(status)}
     </span>
   );
-}
-
-export function PriorityBadge({ priority }: { priority: string }) {
-  return <span className={`badge priority-${priority.toLowerCase()}`}>{priorityLabel(priority)}</span>;
 }
