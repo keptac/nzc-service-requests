@@ -3,6 +3,7 @@ import path from "node:path";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import {
+  DEFAULT_LEAVE_TYPES,
   ROLE_NAMES,
   SERVICE_REQUEST_TYPES,
   STAGE_TO_STATUS,
@@ -105,6 +106,10 @@ function titleFromEmail(email: string, fallback: string) {
 }
 
 async function clearDatabase() {
+  await prisma.leaveApplication.deleteMany();
+  await prisma.leaveBalance.deleteMany();
+  await prisma.leaveType.deleteMany();
+  await prisma.employee.deleteMany();
   await prisma.whatsAppMessage.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.auditLog.deleteMany();
@@ -142,6 +147,22 @@ async function createServiceRequestTypes() {
     requestTypes[name] = requestType;
   }
   return requestTypes;
+}
+
+async function createLeaveTypes() {
+  for (const leaveType of DEFAULT_LEAVE_TYPES) {
+    await prisma.leaveType.create({
+      data: {
+        name: leaveType.name,
+        code: leaveType.code,
+        defaultAnnualDays: leaveType.defaultAnnualDays,
+        monthlyAccrualRate: leaveType.monthlyAccrualRate,
+        paid: leaveType.paid,
+        requiresApproval: true,
+        active: true
+      }
+    });
+  }
 }
 
 async function createHierarchy(rows: NormalizedImportRow[]) {
@@ -526,6 +547,7 @@ async function main() {
   await clearDatabase();
   const roles = await createRoles();
   const requestTypes = await createServiceRequestTypes();
+  await createLeaveTypes();
   const hierarchy = await createHierarchy(rows);
   const { createdUsers, pastorEmailConflicts } = await createImportedUsers({
     rows,

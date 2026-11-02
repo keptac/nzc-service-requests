@@ -19,10 +19,20 @@ const roles = [
   "District Pastor",
   "Church Clerk",
   "Assistant Church Clerk",
-  "Church Elder"
+  "Church Elder",
+  "HR Manager"
 ];
 
 const requestTypes = ["Music Group", "Preaching Assignment", "Training", "Other"];
+
+const leaveTypes = [
+  { name: "Annual Leave", code: "ANNUAL", defaultAnnualDays: 30, monthlyAccrualRate: 2.5, paid: true },
+  { name: "Sick Leave", code: "SICK", defaultAnnualDays: 12, monthlyAccrualRate: null, paid: true },
+  { name: "Compassionate Leave", code: "COMPASSIONATE", defaultAnnualDays: 5, monthlyAccrualRate: null, paid: true },
+  { name: "Maternity Leave", code: "MATERNITY", defaultAnnualDays: 98, monthlyAccrualRate: null, paid: true },
+  { name: "Study Leave", code: "STUDY", defaultAnnualDays: 10, monthlyAccrualRate: null, paid: true },
+  { name: "Unpaid Leave", code: "UNPAID", defaultAnnualDays: 0, monthlyAccrualRate: null, paid: false }
+];
 const approverRoles = {
   DESTINATION: ["Church Clerk", "Assistant Church Clerk", "Church Elder"],
   PASTOR: ["District Pastor"],
@@ -528,6 +538,24 @@ async function createServiceRequestTypes() {
   return requestTypeMap;
 }
 
+async function createLeaveTypes() {
+  for (const leaveType of leaveTypes) {
+    await prisma.leaveType.upsert({
+      where: { code: leaveType.code },
+      update: {},
+      create: {
+        name: leaveType.name,
+        code: leaveType.code,
+        defaultAnnualDays: leaveType.defaultAnnualDays,
+        monthlyAccrualRate: leaveType.monthlyAccrualRate,
+        paid: leaveType.paid,
+        requiresApproval: true,
+        active: true
+      }
+    });
+  }
+}
+
 async function createHierarchy(rows) {
   const usedDistrictCodes = new Set();
   const usedChurchCodes = new Set();
@@ -1021,6 +1049,7 @@ async function createProductionSampleRequests(requestTypeMap) {
 async function main() {
   const roleMap = await createRoles();
   const requestTypeMap = await createServiceRequestTypes();
+  await createLeaveTypes();
   await ensureBootstrapAdmin(roleMap);
   await importSeedData(roleMap);
   await createProductionSampleRequests(requestTypeMap);

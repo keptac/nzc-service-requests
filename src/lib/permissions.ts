@@ -1,5 +1,16 @@
-import { ADMIN_ROLES, APPROVER_ROLES, type ApprovalStage } from "./constants";
-import type { AuthUser, RequestAccessContext, StepAccessContext } from "./types";
+import {
+  ADMIN_ROLES,
+  APPROVER_ROLES,
+  HR_CONFIG_ROLES,
+  HR_ROLES,
+  type ApprovalStage
+} from "./constants";
+import type {
+  AuthUser,
+  LeaveAccessContext,
+  RequestAccessContext,
+  StepAccessContext
+} from "./types";
 
 export function isSuperAdmin(user: AuthUser) {
   return user.roleName === "Super Admin";
@@ -9,7 +20,11 @@ export function isAdminRole(user: AuthUser) {
   return ADMIN_ROLES.includes(user.roleName);
 }
 
-function matchScope(user: AuthUser, scopeType: string, ids: Record<string, string | null | undefined>) {
+export function matchScope(
+  user: AuthUser,
+  scopeType: string,
+  ids: Record<string, string | null | undefined>
+) {
   if (isSuperAdmin(user)) return true;
 
   if (scopeType === "CHURCH") return Boolean(user.churchId && user.churchId === ids.churchId);
@@ -114,4 +129,81 @@ export function canResubmit(user: AuthUser, request: RequestAccessContext, statu
 export function canCancel(user: AuthUser, request: RequestAccessContext, status: string) {
   if (["APPROVED", "DECLINED", "CANCELLED"].includes(status)) return false;
   return isSuperAdmin(user) || request.requesterId === user.id;
+}
+
+// ---- HR / leave permissions ----
+
+export function canAccessHr(user: AuthUser) {
+  return HR_ROLES.includes(user.roleName);
+}
+
+// Configure employees, leave types, and balances.
+export function canManageHrConfig(user: AuthUser) {
+  return HR_CONFIG_ROLES.includes(user.roleName);
+}
+
+// Anyone with an active login can apply for leave (their own employee record).
+export function canApplyForLeave(user: AuthUser) {
+  return user.active;
+}
+
+// Which approval stage an application is currently waiting on.
+export function leaveStage(status: string): "SUPERVISOR" | "ADCOM" | null {
+  if (status === "SUBMITTED") return "SUPERVISOR";
+  if (status === "RECOMMENDED") return "ADCOM";
+  return null;
+}
+
+function matchesApproverScope(user: AuthUser, leave: LeaveAccessContext) {
+  return matchScope(user, leave.approverScopeType, {
+    churchId: leave.approverChurchId,
+    districtId: leave.approverDistrictId,
+    conferenceId: leave.approverConferenceId,
+    unionId: leave.approverUnionId
+  });
+}
+
+export function canViewLeave(user: AuthUser, leave: LeaveAccessContext) {
+  if (canManageHrConfig(user)) return true;
+  if (leave.employeeUserId && leave.employeeUserId === user.id) return true;
+  if (leave.supervisorUserId && leave.supervisorUserId === user.id) return true;
+  return matchesApproverScope(user, leave);
+}
+
+// Stage 1: the employee's supervisor recommends the application.
+export function canSupervisorApproveLeave(user: AuthUser, leave: LeaveAccessContext) {
+  if (leaveStage(leave.status) !== "SUPERVISOR") return false;
+  // Applicants cannot recommend their own leave.
+  if (leave.employeeUserId && leave.employeeUserId === user.id && !isSuperAdmin(user)) {
+    return false;
+  }
+  if (canManageHrConfig(user)) return true;
+  return Boolean(leave.supervisorUserId && leave.supervisorUserId === user.id);
+}
+
+// Stage 2: ADCOM records the minute number for final approval.
+export function canAdcomApproveLeave(user: AuthUser, leave: LeaveAccessContext) {
+  if (leaveStage(leave.status) !== "ADCOM") return false;
+  if (leave.employeeUserId && leave.employeeUserId === user.id && !isSuperAdmin(user)) {
+    return false;
+  }
+  if (canManageHrConfig(user)) return true;
+  if (!canAccessHr(user)) return false;
+  return matchesApproverScope(user, leave);
+}
+
+// Can the user act on whichever stage the application is currently in?
+export function canApproveLeave(user: AuthUser, leave: LeaveAccessContext) {
+  return canSupervisorApproveLeave(user, leave) || canAdcomApproveLeave(user, leave);
+}
+
+// The ADCOM minute number is only required at the final (ADCOM) stage.
+export function leaveRequiresMinute(leave: LeaveAccessContext) {
+  return leaveStage(leave.status) === "ADCOM";
+}
+
+export function canCancelLeave(user: AuthUser, leave: LeaveAccessContext) {
+  if (["APPROVED", "DECLINED", "CANCELLED"].includes(leave.status)) return false;
+  if (canManageHrConfig(user)) return true;
+  return Boolean(leave.employeeUserId && leave.employeeUserId === user.id);
 }

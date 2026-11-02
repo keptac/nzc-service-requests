@@ -9,7 +9,16 @@ import type { RoleName } from "@/lib/constants";
 
 type Resource = keyof typeof createEntitySchemas;
 
-const resources = ["unions", "conferences", "districts", "churches", "users", "requestTypes"] as const;
+const resources = [
+  "unions",
+  "conferences",
+  "districts",
+  "churches",
+  "users",
+  "requestTypes",
+  "leaveTypes",
+  "employees"
+] as const;
 
 function isResource(resource: string): resource is Resource {
   return resources.includes(resource as Resource);
@@ -22,13 +31,64 @@ function modelFor(resource: Resource) {
     districts: prisma.district,
     churches: prisma.church,
     users: prisma.user,
-    requestTypes: prisma.serviceRequestType
+    requestTypes: prisma.serviceRequestType,
+    leaveTypes: prisma.leaveType,
+    employees: prisma.employee
   };
   return models[resource] as any;
 }
 
 function nullableId(value: string | null | undefined) {
   return value && value.length > 0 ? value : null;
+}
+
+type EmployeeInput = {
+  employeeNumber?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string | null;
+  phone?: string | null;
+  jobTitle?: string | null;
+  department?: string | null;
+  employmentType?: string;
+  hireDate?: string | null;
+  status?: string;
+  unionId?: string | null;
+  conferenceId?: string | null;
+  districtId?: string | null;
+  churchId?: string | null;
+  userId?: string | null;
+  supervisorId?: string | null;
+};
+
+// Normalize employee scope ids, optional user link, and the hire date. `mode`
+// controls whether absent fields are coerced (create) or left untouched (update).
+function employeeData(data: EmployeeInput, mode: "create" | "update") {
+  const out: Record<string, unknown> = {
+    employeeNumber: data.employeeNumber,
+    firstName: data.firstName,
+    lastName: data.lastName,
+    email: data.email === undefined ? undefined : data.email || null,
+    phone: data.phone === undefined ? undefined : data.phone || null,
+    jobTitle: data.jobTitle === undefined ? undefined : data.jobTitle || null,
+    department: data.department === undefined ? undefined : data.department || null,
+    employmentType: data.employmentType,
+    status: data.status,
+    unionId: data.unionId === undefined ? undefined : nullableId(data.unionId),
+    conferenceId: data.conferenceId === undefined ? undefined : nullableId(data.conferenceId),
+    districtId: data.districtId === undefined ? undefined : nullableId(data.districtId),
+    churchId: data.churchId === undefined ? undefined : nullableId(data.churchId),
+    userId: data.userId === undefined ? undefined : nullableId(data.userId),
+    supervisorId: data.supervisorId === undefined ? undefined : nullableId(data.supervisorId)
+  };
+  if (data.hireDate !== undefined) {
+    out.hireDate = data.hireDate ? new Date(data.hireDate) : null;
+  }
+  if (mode === "create") {
+    out.employmentType = data.employmentType || "FULL_TIME";
+    out.status = data.status || "ACTIVE";
+  }
+  return out;
 }
 
 export async function POST(request: Request, { params }: { params: { resource: string } }) {
@@ -90,6 +150,10 @@ export async function POST(request: Request, { params }: { params: { resource: s
         districtId: nullableId(data.districtId),
         churchId: nullableId(data.churchId)
       }
+    });
+  } else if (params.resource === "employees") {
+    created = await prisma.employee.create({
+      data: employeeData(payload.data as EmployeeInput, "create") as any
     });
   } else {
     created = await modelFor(params.resource).create({
@@ -195,6 +259,13 @@ export async function PATCH(request: Request, { params }: { params: { resource: 
         churchId: data.churchId === undefined ? undefined : nullableId(data.churchId),
         active: data.active
       }
+    });
+  } else if (params.resource === "employees") {
+    const { id: ignored, ...data } = payload.data as Record<string, unknown>;
+    void ignored;
+    updated = await prisma.employee.update({
+      where: { id },
+      data: employeeData(data as EmployeeInput, "update") as any
     });
   } else {
     const { id: ignored, ...data } = payload.data as Record<string, unknown>;

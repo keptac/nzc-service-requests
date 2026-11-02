@@ -17,5 +17,64 @@ services:
       timeout: 5s
       retries: 10
 
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: base
+    container_name: sda-service-request-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      NEXT_TELEMETRY_DISABLED: "1"
+      PNPM_STORE_DIR: /pnpm/store
+      DATABASE_URL: postgresql://sda:sda_password@postgres:5432/sda_service_request?schema=public
+      AUTH_SECRET: ${AUTH_SECRET:-local-development-auth-secret-change-me-123456}
+      APP_URL: http://localhost:${APP_PORT:-3001}
+      UPLOAD_DIR: /app/public/uploads
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_WHATSAPP_FROM: ${TWILIO_WHATSAPP_FROM:-whatsapp:+14155238886}
+      WHATSAPP_WEBHOOK_TOKEN: ${WHATSAPP_WEBHOOK_TOKEN:-local-webhook-token}
+      BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL:-admin@local.test}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:-Password123!}
+      BOOTSTRAP_ADMIN_NAME: ${BOOTSTRAP_ADMIN_NAME:-Local Administrator}
+      BOOTSTRAP_IMPORT_SEED_DATA: ${BOOTSTRAP_IMPORT_SEED_DATA:-true}
+      BOOTSTRAP_CREATE_SAMPLE_REQUESTS: ${BOOTSTRAP_CREATE_SAMPLE_REQUESTS:-true}
+      SEED_USER_PASSWORD: ${SEED_USER_PASSWORD:-Password123!}
+      WATCHPACK_POLLING: "true"
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      - "${APP_PORT:-3001}:3000"
+    volumes:
+      - .:/app
+      - app_node_modules:/app/node_modules
+      - app_next:/app/.next
+      - app_pnpm_store:/pnpm/store
+      - app_uploads:/app/public/uploads
+    command: >
+      sh -c "pnpm install --frozen-lockfile --store-dir /pnpm/store
+      && pnpm prisma generate
+      && pnpm prisma migrate deploy
+      && node prisma/bootstrap.js
+      && pnpm exec next dev -H 0.0.0.0"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
 volumes:
   postgres_data:
+  app_node_modules:
+  app_next:
+  app_pnpm_store:
+  app_uploads:

@@ -7,7 +7,8 @@ import {
   ClipboardList,
   LayoutDashboard,
   PlusCircle,
-  Settings
+  Settings,
+  Users
 } from "lucide-react";
 
 const icons = {
@@ -15,7 +16,8 @@ const icons = {
   requests: ClipboardList,
   create: PlusCircle,
   reports: BarChart3,
-  admin: Settings
+  admin: Settings,
+  hr: Users
 } as const;
 
 export type NavIcon = keyof typeof icons;

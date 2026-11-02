@@ -10,6 +10,7 @@ const navItems = [
   { href: "/requests/new", label: "Create Request", icon: "create" as const, canShow: canAccessCreateRequest },
   { href: "/requests", label: "Requests", icon: "requests" as const },
   { href: "/reports", label: "Reports", icon: "reports" as const },
+  { href: "/hr", label: "HR & Leave", icon: "hr" as const },
   { href: "/admin", label: "Admin", icon: "admin" as const, canShow: canManageAdmin }
 ];
 

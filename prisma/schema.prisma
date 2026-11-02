@@ -47,6 +47,8 @@ model User {
   auditLogs         AuditLog[]
   notifications     Notification[]
   whatsappMessages  WhatsAppMessage[]
+  employee          Employee?
+  leaveDecisions    LeaveApplication[] @relation("LeaveDecider")
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
 
@@ -290,6 +292,109 @@ model Notification {
   @@index([userId])
   @@index([requestId])
   @@index([readAt])
+}
+
+model Employee {
+  id             String             @id @default(cuid())
+  employeeNumber String             @unique @map("employee_number")
+  firstName      String             @map("first_name")
+  lastName       String             @map("last_name")
+  email          String?
+  phone          String?
+  jobTitle       String?            @map("job_title")
+  department     String?
+  employmentType String             @default("FULL_TIME") @map("employment_type")
+  hireDate       DateTime?          @map("hire_date")
+  status         String             @default("ACTIVE")
+  unionId        String?            @map("union_id")
+  conferenceId   String?            @map("conference_id")
+  districtId     String?            @map("district_id")
+  churchId       String?            @map("church_id")
+  userId         String?            @unique @map("user_id")
+  user           User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  supervisorId   String?            @map("supervisor_id")
+  supervisor     Employee?          @relation("EmployeeSupervisor", fields: [supervisorId], references: [id], onDelete: SetNull)
+  reports        Employee[]         @relation("EmployeeSupervisor")
+  leaveApplications LeaveApplication[]
+  leaveBalances  LeaveBalance[]
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  @@index([unionId])
+  @@index([conferenceId])
+  @@index([districtId])
+  @@index([churchId])
+  @@index([supervisorId])
+  @@index([status])
+}
+
+model LeaveType {
+  id                 String             @id @default(cuid())
+  name               String             @unique
+  code               String             @unique
+  defaultAnnualDays  Int                @default(0) @map("default_annual_days")
+  monthlyAccrualRate Float?             @map("monthly_accrual_rate")
+  paid               Boolean            @default(true)
+  requiresApproval   Boolean            @default(true) @map("requires_approval")
+  active             Boolean            @default(true)
+  description        String?
+  applications      LeaveApplication[]
+  balances          LeaveBalance[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+}
+
+model LeaveBalance {
+  id              String    @id @default(cuid())
+  employeeId      String    @map("employee_id")
+  employee        Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  leaveTypeId     String    @map("leave_type_id")
+  leaveType       LeaveType @relation(fields: [leaveTypeId], references: [id], onDelete: Cascade)
+  year            Int
+  entitledDays    Float     @default(0) @map("entitled_days")
+  carriedOverDays Float     @default(0) @map("carried_over_days")
+  usedDays        Float     @default(0) @map("used_days")
+  pendingDays     Float     @default(0) @map("pending_days")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([employeeId, leaveTypeId, year])
+  @@index([leaveTypeId])
+}
+
+model LeaveApplication {
+  id                  String    @id @default(cuid())
+  applicationNumber   String    @unique @map("application_number")
+  employeeId          String    @map("employee_id")
+  employee            Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  leaveTypeId         String    @map("leave_type_id")
+  leaveType           LeaveType @relation(fields: [leaveTypeId], references: [id])
+  startDate           DateTime  @map("start_date")
+  endDate             DateTime  @map("end_date")
+  totalDays           Float     @map("total_days")
+  reason              String
+  contactWhileAway    String?   @map("contact_while_away")
+  adcomMinuteNumber   String?   @map("adcom_minute_number")
+  status              String    @default("SUBMITTED")
+  supervisorUserId    String?   @map("supervisor_user_id")
+  supervisorApprovedAt DateTime? @map("supervisor_approved_at")
+  approverScopeType   String    @map("approver_scope_type")
+  approverUnionId     String?   @map("approver_union_id")
+  approverConferenceId String?  @map("approver_conference_id")
+  approverDistrictId  String?   @map("approver_district_id")
+  approverChurchId    String?   @map("approver_church_id")
+  decidedById         String?   @map("decided_by_id")
+  decidedBy           User?     @relation("LeaveDecider", fields: [decidedById], references: [id], onDelete: SetNull)
+  decidedAt           DateTime? @map("decided_at")
+  decisionComment     String?   @map("decision_comment")
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([employeeId])
+  @@index([leaveTypeId])
+  @@index([status])
+  @@index([approverConferenceId])
+  @@index([approverDistrictId])
 }
 
 model WhatsAppMessage {

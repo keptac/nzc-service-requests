@@ -13,7 +13,54 @@ A full-stack approval workflow application for Seventh-day Adventist Church serv
 
 The visual system uses Adventist identity guidance: Advent Sans style with Noto/system fallbacks, official base palette colors such as Forest `#355724`, Ming `#007f98`, and Denim `#2f557f`, clean spacing, high contrast, and restrained administrative layouts.
 
-## Setup
+## Docker Compose Setup
+
+Requires Docker with the Compose plugin.
+
+Start the full local stack:
+
+```bash
+docker compose up --build
+```
+
+Open `http://localhost:3001`.
+
+The local Compose stack runs:
+
+- `postgres` on host port `55432`
+- `app` on host port `3001` by default, mapped to container port `3000`
+
+To use another host app port:
+
+```bash
+APP_PORT=3000 docker compose up --build
+```
+
+On startup, the app container installs dependencies into a Docker volume, generates Prisma Client, runs migrations, and runs the idempotent bootstrap importer. This creates a local Super Admin and imports the demo ZEUC data without clearing existing local data.
+
+Local login:
+
+- Email: `admin@local.test`
+- Password: `Password123!`
+
+Imported seed users also use password `Password123!`.
+
+Useful commands:
+
+```bash
+docker compose ps
+docker compose logs -f app
+docker compose logs -f postgres
+docker compose down
+```
+
+If you want to wipe the local Docker database and volumes:
+
+```bash
+docker compose down -v
+```
+
+## Host Machine Setup
 
 Requires Node.js `>=18.17.0` and Docker for the local PostgreSQL database.
 

@@ -88,6 +88,17 @@ export type RequestAccessContext = {
   } | null;
 };
 
+export type LeaveAccessContext = {
+  status: string;
+  employeeUserId?: string | null;
+  supervisorUserId?: string | null;
+  approverScopeType: string;
+  approverChurchId?: string | null;
+  approverDistrictId?: string | null;
+  approverConferenceId?: string | null;
+  approverUnionId?: string | null;
+};
+
 export type StepAccessContext = {
   stage: ApprovalStage;
   status: string;
